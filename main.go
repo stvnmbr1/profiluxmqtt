@@ -38,7 +38,7 @@ func main() {
 
 	controllerRepo := repo.NewController()
 
-	mqttOptions := mqtt.NewClientOptions().AddBroker(fmt.Sprintf("mqtt://%s:%d", appConfig.MqttHost, appConfig.MqttPort)).SetClientID("profilux-mqtt")
+	mqttOptions := mqtt.NewClientOptions().AddBroker(fmt.Sprintf("mqtt://%s:%d", appConfig.MqttHost, appConfig.MqttPort)).SetClientID("profilux-mqtt2")
 	mqttOptions.SetOrderMatters(false)       // Allow out of order messages (use this option unless in order delivery is essential)
 	mqttOptions.ConnectTimeout = time.Second // Minimal delays on connect
 	mqttOptions.WriteTimeout = time.Second   // Minimal delays on writes
@@ -101,12 +101,12 @@ func main() {
 		commands.FeedPause(true, controllerRepo, log, appConfig.Connection)
 	})
 
+	var profiluxMqtt profiluxmqtt.ProfiluxMqtt
+
 	log.Debugf("Getting Data from Controller")
 	for {
 		var err = update.All(controllerRepo, log, appConfig.Connection)
 		if err == nil {
-			profiluxmqtt.UpdateMQTT(controllerRepo, mqttClient, log)
-			profiluxmqtt.UpdateHomeAssistant(controllerRepo, mqttClient, log)
 			break
 		}
 
@@ -116,20 +116,23 @@ func main() {
 		continue
 	}
 
-	go RunUpdateConfig(controllerRepo, mqttClient, log, appConfig)
-	RunUpdate(controllerRepo, mqttClient, log, appConfig)
+	profiluxMqtt.UpdateMQTT(controllerRepo, mqttClient, log, false)
+	profiluxMqtt.UpdateHomeAssistant(controllerRepo, mqttClient, log, false)
+
+	go RunUpdateConfig(controllerRepo, mqttClient, log, appConfig, &profiluxMqtt)
+	RunUpdate(controllerRepo, mqttClient, log, appConfig, &profiluxMqtt)
 }
 
-const logRate = time.Second * 10
-const logAllRate = time.Second * 11
+const logRate = time.Second * 1
+const logAllRate = time.Minute * 1
 
-func RunUpdateConfig(controller repo.Controller, mqttClient mqtt.Client, log logger.ILog, config appSettings.Config) {
+func RunUpdateConfig(controller repo.Controller, mqttClient mqtt.Client, log logger.ILog, config appSettings.Config, profiluxMqtt *profiluxmqtt.ProfiluxMqtt) {
 	c := make(chan os.Signal, 1) // we need to reserve to buffer size 1, so the notifier are not blocked
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	for {
 		select {
 		case <-c:
-			profiluxmqtt.PublishMQTT(mqttClient, log, "status", "offline")
+			profiluxMqtt.PublishMQTT(mqttClient, log, "status", "offline")
 			log.Debug("Exit Application")
 			return
 		case <-time.After(logAllRate):
@@ -138,14 +141,14 @@ func RunUpdateConfig(controller repo.Controller, mqttClient mqtt.Client, log log
 			if err != nil {
 				log.Errorf(err, "Unable to update")
 			} else {
-				profiluxmqtt.UpdateMQTT(controller, mqttClient, log)
-				profiluxmqtt.UpdateHomeAssistant(controller, mqttClient, log)
+				profiluxMqtt.UpdateMQTT(controller, mqttClient, log, false)
+				profiluxMqtt.UpdateHomeAssistant(controller, mqttClient, log, false)
 			}
 		}
 	}
 }
 
-func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.ILog, config appSettings.Config) {
+func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.ILog, config appSettings.Config, profiluxMqtt *profiluxmqtt.ProfiluxMqtt) {
 	c := make(chan os.Signal, 1) // we need to reserve to buffer size 1, so the notifier are not blocked
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	for {
@@ -159,7 +162,7 @@ func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.IL
 			if err != nil {
 				log.Errorf(err, "Unable to update state")
 			} else {
-				profiluxmqtt.UpdateMQTT(controller, mqttClient, log)
+				profiluxMqtt.UpdateMQTT(controller, mqttClient, log, true)
 			}
 		}
 	}
