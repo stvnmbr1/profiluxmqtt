@@ -26,7 +26,7 @@ import (
 func main() {
 	log := logger.Create(logger.Settings{
 		MinLogLevel:  logger.INFO,
-		ServiceName:  "Profilux API",
+		ServiceName:  "Profilux MQTT",
 		LogToConsole: true,
 		UseHTTP:      false,
 		UsePubSub:    false,
@@ -116,20 +116,41 @@ func main() {
 		continue
 	}
 
+	go RunUpdateConfig(controllerRepo, mqttClient, log, appConfig)
 	RunUpdate(controllerRepo, mqttClient, log, appConfig)
 }
 
 const logRate = time.Second * 10
 const logAllRate = time.Second * 11
 
-func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.ILog, config appSettings.Config) {
-
+func RunUpdateConfig(controller repo.Controller, mqttClient mqtt.Client, log logger.ILog, config appSettings.Config) {
 	c := make(chan os.Signal, 1) // we need to reserve to buffer size 1, so the notifier are not blocked
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	for {
 		select {
 		case <-c:
-			//profiluxmqtt.PublishMQTT(mqttClient, log, "status", "offline")
+			profiluxmqtt.PublishMQTT(mqttClient, log, "status", "offline")
+			log.Debug("Exit Application")
+			return
+		case <-time.After(logAllRate):
+			log.Print("Updating Config")
+			var err = update.All(controller, log, config.Connection)
+			if err != nil {
+				log.Errorf(err, "Unable to update")
+			} else {
+				profiluxmqtt.UpdateMQTT(controller, mqttClient, log)
+				profiluxmqtt.UpdateHomeAssistant(controller, mqttClient, log)
+			}
+		}
+	}
+}
+
+func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.ILog, config appSettings.Config) {
+	c := make(chan os.Signal, 1) // we need to reserve to buffer size 1, so the notifier are not blocked
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	for {
+		select {
+		case <-c:
 			log.Debug("Exit Application")
 			return
 		case <-time.After(logRate):
@@ -139,15 +160,6 @@ func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.IL
 				log.Errorf(err, "Unable to update state")
 			} else {
 				profiluxmqtt.UpdateMQTT(controller, mqttClient, log)
-			}
-		case <-time.After(logAllRate):
-			log.Print("Updating Config")
-			var err = update.All(controller, log, config.Connection)
-			if err != nil {
-				log.Errorf(err, "Unable to update")
-			} else {
-				profiluxmqtt.UpdateMQTT(controller, mqttClient, log)
-				profiluxmqtt.UpdateHomeAssistant(controller, mqttClient, log)
 			}
 		}
 	}
