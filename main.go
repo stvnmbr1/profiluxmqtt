@@ -141,8 +141,8 @@ func RunUpdateConfig(controller repo.Controller, mqttClient mqtt.Client, log log
 			if err != nil {
 				log.Errorf(err, "Unable to update")
 			} else {
-				profiluxMqtt.UpdateMQTT(controller, mqttClient, log, false)
-				profiluxMqtt.UpdateHomeAssistant(controller, mqttClient, log, false)
+				profiluxMqtt.UpdateMQTT(controller, mqttClient, log, true)
+				profiluxMqtt.UpdateHomeAssistant(controller, mqttClient, log, true)
 			}
 		}
 	}
@@ -162,7 +162,7 @@ func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.IL
 			if err != nil {
 				log.Errorf(err, "Unable to update state")
 			} else {
-				profiluxMqtt.UpdateMQTT(controller, mqttClient, log, true)
+				profiluxMqtt.UpdateMQTT(controller, mqttClient, log, false)
 			}
 		}
 	}
