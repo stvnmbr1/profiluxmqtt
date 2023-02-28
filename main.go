@@ -132,7 +132,7 @@ func RunUpdateConfig(controller repo.Controller, mqttClient mqtt.Client, log log
 	for {
 		select {
 		case <-c:
-			profiluxMqtt.PublishMQTT(mqttClient, log, "status", "offline")
+			profiluxMqtt.PublishMQTT(mqttClient, log, "status", "offline", true)
 			log.Debug("Exit Application")
 			return
 		case <-time.After(logAllRate):
