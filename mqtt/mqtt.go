@@ -23,6 +23,27 @@ type ProfiluxMqtt struct {
 	data map[string]string
 }
 
+func (profiMqtt *ProfiluxMqtt) PublishMQTTOld(mqttClient mqtt.Client, log logger.ILog, topic string) {
+	fullTopic := fmt.Sprintf("profiluxmqtt/%s", topic)
+	if profiMqtt.data == nil {
+		return
+	} else {
+		_, ok := profiMqtt.data[fullTopic]
+		if !ok {
+			return
+		}
+	}
+
+	t := mqttClient.Publish(fullTopic, 1, false, profiMqtt.data[fullTopic])
+	// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
+	go func() {
+		_ = t.Wait() // Can also use '<-t.Done()' in releases > 1.2.0
+		if t.Error() != nil {
+			log.Warnf("ERROR PUBLISHING profiluxmqtt/%s", fullTopic)
+		}
+	}()
+}
+
 func (profiMqtt *ProfiluxMqtt) PublishMQTT(mqttClient mqtt.Client, log logger.ILog, topic string, payload string, forceUpdate bool) {
 	fullTopic := fmt.Sprintf("profiluxmqtt/%s", topic)
 	if profiMqtt.data == nil {
@@ -414,12 +435,20 @@ func (profiMqtt *ProfiluxMqtt) UpdateMQTT(controllerRepo repo.Controller, mqttCl
 	probes, _ := controllerRepo.GetProbes()
 	for _, p := range probes {
 		path := fmt.Sprintf("%s/Probes/%s", controllerName, p.ID)
-		if !(p.SensorType == types.SensorTypeAirTemperature && (p.Value > 35 || p.Value < -30)) {
-			data, _ := json.Marshal(p)
-			profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
-			profiMqtt.PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value), forceUpdate)
-			profiMqtt.PublishMQTT(mqttClient, log, path+"/convertedvalue", fmt.Sprintf("%.2f", p.ConvertedValue), forceUpdate)
+		if p.SensorType == types.SensorTypeAirTemperature {
+			if p.Value > 35 || p.Value < -30 {
+				if forceUpdate {
+					profiMqtt.PublishMQTTOld(mqttClient, log, path+"/data")
+					profiMqtt.PublishMQTTOld(mqttClient, log, path+"/state")
+					profiMqtt.PublishMQTTOld(mqttClient, log, path+"/convertedvalue")
+				}
+				continue
+			}
 		}
+		data, _ := json.Marshal(p)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/convertedvalue", fmt.Sprintf("%.2f", p.ConvertedValue), forceUpdate)
 	}
 
 	levelSensors, _ := controllerRepo.GetLevelSensors()
