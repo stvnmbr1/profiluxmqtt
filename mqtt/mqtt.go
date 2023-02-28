@@ -19,24 +19,48 @@ func sanitize(text string) string {
 	return newText
 }
 
-func PublishMQTT(mqttClient mqtt.Client, log logger.ILog, topic string, payload interface{}) {
-	t := mqttClient.Publish("profiluxmqtt/"+topic, 1, false, payload)
+type ProfiluxMqtt struct {
+	data map[string]string
+}
+
+func (profiMqtt *ProfiluxMqtt) PublishMQTT(mqttClient mqtt.Client, log logger.ILog, topic string, payload string, forceUpdate bool) {
+	fullTopic := fmt.Sprintf("profiluxmqtt/%s", topic)
+	if profiMqtt.data == nil {
+		profiMqtt.data = make(map[string]string)
+	} else {
+		if profiMqtt.data[fullTopic] == payload && !forceUpdate {
+			return
+		}
+	}
+	profiMqtt.data[fullTopic] = payload
+
+	t := mqttClient.Publish(fullTopic, 1, false, payload)
 	// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 	go func() {
 		_ = t.Wait() // Can also use '<-t.Done()' in releases > 1.2.0
 		if t.Error() != nil {
-			log.Warnf("ERROR PUBLISHING profiluxmqtt/%s", topic)
+			log.Warnf("ERROR PUBLISHING profiluxmqtt/%s", fullTopic)
 		}
 	}()
 }
 
-func publishHA(mqttClient mqtt.Client, log logger.ILog, platform string, device string, topic string, payload interface{}) {
-	t := mqttClient.Publish(fmt.Sprintf("homeassistant/%s/%s/%s/config", platform, device, topic), 1, false, payload)
+func (profiMqtt *ProfiluxMqtt) publishHA(mqttClient mqtt.Client, log logger.ILog, platform string, device string, topic string, payload []byte, forceUpdate bool) {
+	fullTopic := fmt.Sprintf("homeassistant/%s/%s/%s/config", platform, device, topic)
+	if profiMqtt.data == nil {
+		profiMqtt.data = make(map[string]string)
+	} else {
+		if profiMqtt.data[fullTopic] == string(payload) && !forceUpdate {
+			return
+		}
+	}
+	profiMqtt.data[fullTopic] = string(payload)
+
+	t := mqttClient.Publish(fullTopic, 1, false, payload)
 	// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 	go func() {
 		_ = t.Wait() // Can also use '<-t.Done()' in releases > 1.2.0
 		if t.Error() != nil {
-			log.Warnf("ERROR PUBLISHING homeassistant/%s/%s/%s/config", platform, device, topic)
+			log.Warnf("ERROR PUBLISHING %s", fullTopic)
 		}
 	}()
 }
@@ -76,7 +100,7 @@ type HaSwitchConfig struct {
 	CommandTopic string `json:"command_topic"`
 }
 
-func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client, log logger.ILog) {
+func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client, log logger.ILog, forceUpdate bool) {
 	info, _ := controllerRepo.GetInfo()
 	controllerName := fmt.Sprintf("%s_%d", sanitize(string(info.Model)), info.DeviceAddress)
 	device := Device{
@@ -101,7 +125,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 	}
 
 	msg, _ := json.Marshal(config)
-	publishHA(mqttClient, log, "binary_sensor", controllerName, "Alarm", msg)
+	profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, "Alarm", msg, forceUpdate)
 
 	modeConfig := HaStateConfig{
 		HaBaseConfig: HaBaseConfig{
@@ -116,7 +140,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 	}
 
 	modeMsg, _ := json.Marshal(modeConfig)
-	publishHA(mqttClient, log, "sensor", controllerName, "Mode", modeMsg)
+	profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, "Mode", modeMsg, forceUpdate)
 
 	feedButtonConfig := HaButtonConfig{
 		HaBaseConfig: HaBaseConfig{
@@ -131,7 +155,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 	}
 
 	feedButtonMsg, _ := json.Marshal(feedButtonConfig)
-	publishHA(mqttClient, log, "button", controllerName, "FeedPause", feedButtonMsg)
+	profiMqtt.publishHA(mqttClient, log, "button", controllerName, "FeedPause", feedButtonMsg, forceUpdate)
 
 	for _, p := range info.Maintenance {
 		name := fmt.Sprintf("Maintenance%d", p.Index)
@@ -149,7 +173,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			StateTopic:   fmt.Sprintf("profiluxmqtt/%s/Maintenance/%d/state", controllerName, p.Index),
 		}
 		msg, _ := json.Marshal(buttonConfig)
-		publishHA(mqttClient, log, "switch", controllerName, name, msg)
+		profiMqtt.publishHA(mqttClient, log, "switch", controllerName, name, msg, forceUpdate)
 	}
 
 	for _, p := range info.Reminders {
@@ -168,7 +192,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 		}
 
 		msg, _ := json.Marshal(buttonConfig)
-		publishHA(mqttClient, log, "button", controllerName, name, msg)
+		profiMqtt.publishHA(mqttClient, log, "button", controllerName, name, msg, forceUpdate)
 
 		stateConfig := HaStateConfig{
 			HaBaseConfig: HaBaseConfig{
@@ -183,7 +207,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Reminders/%d/state", controllerName, p.Index),
 		}
 		msg, _ = json.Marshal(stateConfig)
-		publishHA(mqttClient, log, "binary_sensor", controllerName, name, msg)
+		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name, msg, forceUpdate)
 	}
 
 	probes, _ := controllerRepo.GetProbes()
@@ -222,7 +246,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			UnitOfMeasurement: p.Units,
 		}
 		msg, _ := json.Marshal(stateConfig)
-		publishHA(mqttClient, log, "sensor", controllerName, name, msg)
+		profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name, msg, forceUpdate)
 	}
 
 	levelSensors, _ := controllerRepo.GetLevelSensors()
@@ -241,7 +265,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/state", controllerName, name),
 		}
 		msgLevel, _ := json.Marshal(stateConfig)
-		publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State", msgLevel)
+		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State", msgLevel, forceUpdate)
 
 		alarmConfig := HaStateConfig{
 			HaBaseConfig: HaBaseConfig{
@@ -256,7 +280,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/alarm", controllerName, name),
 		}
 		msgAlarm, _ := json.Marshal(alarmConfig)
-		publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_Alarm", msgAlarm)
+		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_Alarm", msgAlarm, forceUpdate)
 
 		clearAlarmConfig := HaButtonConfig{
 			HaBaseConfig: HaBaseConfig{
@@ -270,7 +294,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/clearalarm", controllerName, name),
 		}
 		msgClearAlarm, _ := json.Marshal(clearAlarmConfig)
-		publishHA(mqttClient, log, "button", controllerName, name, msgClearAlarm)
+		profiMqtt.publishHA(mqttClient, log, "button", controllerName, name, msgClearAlarm, forceUpdate)
 
 		if p.HasTwoInputs {
 			stateConfig2 := HaStateConfig{
@@ -286,7 +310,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 				StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/state2", controllerName, name),
 			}
 			config2Msg, _ := json.Marshal(stateConfig2)
-			publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State2", config2Msg)
+			profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State2", config2Msg, forceUpdate)
 		}
 
 		if p.HasWaterChange {
@@ -303,7 +327,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 				StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/waterchange", controllerName, name),
 			}
 			waterChangeMsg, _ := json.Marshal(waterChangeConfig)
-			publishHA(mqttClient, log, "sensor", controllerName, name+"_WaterChange", waterChangeMsg)
+			profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name+"_WaterChange", waterChangeMsg, forceUpdate)
 
 			startWaterChange := HaButtonConfig{
 				HaBaseConfig: HaBaseConfig{
@@ -317,7 +341,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 				CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/startwaterchange", controllerName, name),
 			}
 			msgStartWaterChange, _ := json.Marshal(startWaterChange)
-			publishHA(mqttClient, log, "button", controllerName, name+"_StartWaterChange", msgStartWaterChange)
+			profiMqtt.publishHA(mqttClient, log, "button", controllerName, name+"_StartWaterChange", msgStartWaterChange, forceUpdate)
 		}
 	}
 
@@ -337,7 +361,7 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			StateTopic: fmt.Sprintf("profiluxmqtt/%s/SPorts/%s/state", controllerName, name),
 		}
 		msgLevel, _ := json.Marshal(stateConfig)
-		publishHA(mqttClient, log, "binary_sensor", controllerName, name, msgLevel)
+		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name, msgLevel, forceUpdate)
 	}
 
 	lightPorts, _ := controllerRepo.GetLPorts()
@@ -360,55 +384,57 @@ func UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client,
 			UnitOfMeasurement: "%",
 		}
 		msgLevel, _ := json.Marshal(stateConfig)
-		publishHA(mqttClient, log, "sensor", controllerName, name, msgLevel)
+		profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name, msgLevel, forceUpdate)
 	}
 }
 
-func UpdateMQTT(controllerRepo repo.Controller, mqttClient mqtt.Client, log logger.ILog) {
+func (profiMqtt *ProfiluxMqtt) UpdateMQTT(controllerRepo repo.Controller, mqttClient mqtt.Client, log logger.ILog, forceUpdate bool) {
 	info, _ := controllerRepo.GetInfo()
 	msg, _ := json.Marshal(info)
 	controllerName := sanitize(string(info.Model)) + "_" + fmt.Sprintf("%d", info.DeviceAddress)
-	PublishMQTT(mqttClient, log, "status", "online")
-	PublishMQTT(mqttClient, log, controllerName+"/Controller/data", msg)
-	PublishMQTT(mqttClient, log, controllerName+"/Controller/alarm", string(info.Alarm))
-	PublishMQTT(mqttClient, log, controllerName+"/Controller/mode", string(info.OperationMode))
+	profiMqtt.PublishMQTT(mqttClient, log, "status", "online", forceUpdate)
+	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/data", string(msg), forceUpdate)
+	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/alarm", string(info.Alarm), forceUpdate)
+	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/mode", string(info.OperationMode), forceUpdate)
 
 	for _, p := range info.Maintenance {
 		path := fmt.Sprintf("%s/Maintenance/%d", controllerName, p.Index)
 		data, _ := json.Marshal(p)
-		PublishMQTT(mqttClient, log, path+"/data", data)
-		PublishMQTT(mqttClient, log, path+"/state", strings.ToUpper(string(p.IsActive)))
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", strings.ToUpper(string(p.IsActive)), forceUpdate)
 	}
 
 	for _, p := range info.Reminders {
 		path := fmt.Sprintf("%s/Reminders/%d", controllerName, p.Index)
 		data, _ := json.Marshal(p)
-		PublishMQTT(mqttClient, log, path+"/data", data)
-		PublishMQTT(mqttClient, log, path+"/state", string(p.IsOverdue))
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", string(p.IsOverdue), forceUpdate)
 	}
 
 	probes, _ := controllerRepo.GetProbes()
 	for _, p := range probes {
 		path := fmt.Sprintf("%s/Probes/%s", controllerName, p.ID)
-		data, _ := json.Marshal(p)
-		PublishMQTT(mqttClient, log, path+"/data", data)
-		PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value))
-		PublishMQTT(mqttClient, log, path+"/convertedvalue", fmt.Sprintf("%.2f", p.ConvertedValue))
+		if !(p.SensorType == types.SensorTypeAirTemperature && (p.Value > 35 || p.Value < -30)) {
+			data, _ := json.Marshal(p)
+			profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
+			profiMqtt.PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value), forceUpdate)
+			profiMqtt.PublishMQTT(mqttClient, log, path+"/convertedvalue", fmt.Sprintf("%.2f", p.ConvertedValue), forceUpdate)
+		}
 	}
 
 	levelSensors, _ := controllerRepo.GetLevelSensors()
 	for _, p := range levelSensors {
 		path := fmt.Sprintf("%s/Level/%s", controllerName, p.ID)
 		data, _ := json.Marshal(p)
-		PublishMQTT(mqttClient, log, path+"/data", data)
-		PublishMQTT(mqttClient, log, path+"/state", string(p.Value))
-		PublishMQTT(mqttClient, log, path+"/alarm", string(p.AlarmState))
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", string(p.Value), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/alarm", string(p.AlarmState), forceUpdate)
 		if p.HasTwoInputs {
-			PublishMQTT(mqttClient, log, path+"/state2", string(p.SecondSensor))
+			profiMqtt.PublishMQTT(mqttClient, log, path+"/state2", string(p.SecondSensor), forceUpdate)
 		}
 
 		if p.HasWaterChange {
-			PublishMQTT(mqttClient, log, path+"/waterchange", string(p.WaterMode))
+			profiMqtt.PublishMQTT(mqttClient, log, path+"/waterchange", string(p.WaterMode), forceUpdate)
 		}
 	}
 
@@ -416,15 +442,15 @@ func UpdateMQTT(controllerRepo repo.Controller, mqttClient mqtt.Client, log logg
 	for _, p := range sockets {
 		path := fmt.Sprintf("%s/SPorts/%s", controllerName, p.ID)
 		data, _ := json.Marshal(p)
-		PublishMQTT(mqttClient, log, path+"/data", data)
-		PublishMQTT(mqttClient, log, path+"/state", string(p.Value))
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", string(p.Value), forceUpdate)
 	}
 
 	lightPorts, _ := controllerRepo.GetLPorts()
 	for _, p := range lightPorts {
 		path := fmt.Sprintf("%s/LPorts/%s", controllerName, p.ID)
 		data, _ := json.Marshal(p)
-		PublishMQTT(mqttClient, log, path+"/data", data)
-		PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value))
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
+		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value), forceUpdate)
 	}
 }
