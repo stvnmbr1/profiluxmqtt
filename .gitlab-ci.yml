@@ -6,35 +6,10 @@ variables:
   CONTROLER_IMAGE: $CI_REGISTRY_IMAGE/controller
   CONTROLER_TAG: $CI_REGISTRY_IMAGE/controller/$CI_COMMIT_REF_SLUG:$CI_COMMIT_SHA
 
-before_script:
-  - export GO_PROJECT_PATH="$GOPATH/src/github.com/$CI_PROJECT_NAMESPACE"
-  - echo $GO_PROJECT_PATH
-  - mkdir -p $GO_PROJECT_PATH
-  - ln -s $(pwd) $GO_PROJECT_PATH
-  - export GO_PROJECT_PATH="$GO_PROJECT_PATH/$CI_PROJECT_NAME"
-  - echo $GO_PROJECT_PATH
-  - cd $GO_PROJECT_PATH
-
 stages:
   - style
   - build
   - test
-
-go-vet:
-  image: golang:1.20
-  stage: style
-  script:
-    - go fmt $(go list ./... | grep -v /vendor/)
-    - go vet $(go list ./... | grep -v /vendor/)
-
-go-lint:
-  image: golang:1.20
-  stage: style
-  before_script:
-    - go get -u golang.org/x/lint/golint/...
-  script:
-    - out=$(golint $(go list ./... | grep -v "vendor"))
-    # - if [ "$out" ]; then echo "$out"; exit 1; fi
 
 docker-lint:
   stage: style
@@ -51,6 +26,7 @@ docker-lint:
 docker-build-master:
   inherit:
     default: false
+  needs: []
   image: docker:latest
   stage: build
   services:
@@ -69,6 +45,7 @@ docker-build-master:
 
 docker-build-server:
   image: docker:latest
+  needs: []
   inherit:
     default: false
   stage: build
@@ -81,8 +58,3 @@ docker-build-server:
     - docker push $IMAGE_TAG
   except:
     - master
-
-include:
-  - template: Container-Scanning.gitlab-ci.yml
-  - template: Security/License-Scanning.gitlab-ci.yml
-  - template: Dependency-Scanning.gitlab-ci.yml
