@@ -102,6 +102,7 @@ type HaBaseConfig struct {
 	DeviceClass         string `json:"device_class,omitempty"`
 	PayloadAvailable    string `json:"payload_available"`
 	PayloadNotAvailable string `json:"payload_not_available"`
+	Icon                string `json:"icon, omitempty"`
 }
 
 type HaStateConfig struct {
