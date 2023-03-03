@@ -8,6 +8,4 @@ COPY --from=serverbuilder /code/main  /server/main
 
 WORKDIR  /server
 
-EXPOSE 8090
-
 CMD ["./main"]

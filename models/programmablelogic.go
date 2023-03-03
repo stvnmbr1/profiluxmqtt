@@ -16,6 +16,14 @@ type ProgrammableLogic struct {
 	Type        string
 }
 
+func (p ProgrammableLogic) GetID() string {
+	return p.ID
+}
+
+func (p ProgrammableLogic) GetType() string {
+	return p.Type
+}
+
 const ProgrammableLogicType = "ProgrammableLogic"
 
 func NewProgrammableLogic(index int) ProgrammableLogic {

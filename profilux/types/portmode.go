@@ -7,4 +7,5 @@ type PortMode struct {
 	Invert     bool
 	Id         string
 	IsProbe    bool
+	Type       string
 }
