@@ -23,6 +23,10 @@ type Probe struct {
 	MinRange       float64
 }
 
+func (probe *Probe) GetType() string {
+	return string(probe.SensorType)
+}
+
 func (probe *Probe) SetValue(value float64) {
 	probe.Value = value
 	probe.ConvertedValue = probe.convertValue(value)
