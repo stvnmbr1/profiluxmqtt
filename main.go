@@ -24,16 +24,15 @@ import (
 )
 
 func main() {
+	set := settings.Get(env.Get("ConfigFile", ""))
 	log := logger.Create(logger.Settings{
-		MinLogLevel:  logger.INFO,
+		MinLogLevel:  logger.GetLogLevel(set.Get("MinLogLevel", logger.INFO.Text)),
 		ServiceName:  "Profilux MQTT",
 		LogToConsole: true,
 		UseHTTP:      false,
 		UsePubSub:    false,
 	})
-
 	log.Printf("Starting Up!")
-	set := settings.Get(env.Get("ConfigFile", ""))
 	appConfig := appSettings.Get(set)
 
 	controllerRepo := repo.NewController()
@@ -136,7 +135,7 @@ func RunUpdateConfig(controller repo.Controller, mqttClient mqtt.Client, log log
 			log.Debug("Exit Application")
 			return
 		case <-time.After(logAllRate):
-			log.Print("Updating Config")
+			log.Debug("Updating Config")
 			var err = update.All(controller, log, config.Connection)
 			if err != nil {
 				log.Errorf(err, "Unable to update")
@@ -157,7 +156,7 @@ func RunUpdate(controller repo.Controller, mqttClient mqtt.Client, log logger.IL
 			log.Debug("Exit Application")
 			return
 		case <-time.After(logRate):
-			log.Print("Updating State")
+			log.Debug("Updating State")
 			var err = update.State(controller, log, config.Connection)
 			if err != nil {
 				log.Errorf(err, "Unable to update state")
