@@ -172,21 +172,21 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 		Manufacturer: "GHL",
 	}
 
-	//config := HaStateConfig{
-	//	HaBaseConfig: HaBaseConfig{
-	//		Device:              device,
-	//		Name:                fmt.Sprintf("%s Alarm", deviceName),
-	//		UniqueId:            strings.ToLower(fmt.Sprintf("%s_alarm", controllerName)),
-	//		AvailabilityTopic:   "profiluxmqtt/status",
-	//		PayloadAvailable:    "online",
-	//		PayloadNotAvailable: "offline",
-	//		DeviceClass:         "problem",
-	//	},
-	//	StateTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/alarm", controllerName),
-	//}
-	//
-	//msg, _ := json.Marshal(config)
-	//profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, "Alarm", msg, forceUpdate)
+	config := HaStateConfig{
+		HaBaseConfig: HaBaseConfig{
+			Device:              device,
+			Name:                fmt.Sprintf("%s Alarm", deviceName),
+			UniqueId:            strings.ToLower(fmt.Sprintf("%s_alarm", controllerName)),
+			AvailabilityTopic:   "profiluxmqtt/status",
+			PayloadAvailable:    "online",
+			PayloadNotAvailable: "offline",
+			DeviceClass:         "problem",
+		},
+		StateTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/alarm", controllerName),
+	}
+
+	msg, _ := json.Marshal(config)
+	profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, "Alarm", msg, forceUpdate)
 
 	modeConfig := HaStateConfig{
 		HaBaseConfig: HaBaseConfig{
@@ -218,219 +218,219 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 
 	modeSocketMsg, _ := json.Marshal(modeSocketsConfig)
 	profiMqtt.publishHA(mqttClient, log, "switch", controllerName, "ManualSockets", modeSocketMsg, forceUpdate)
-	//
-	//feedButtonConfig := HaButtonConfig{
-	//	HaBaseConfig: HaBaseConfig{
-	//		Device:              device,
-	//		Name:                fmt.Sprintf("%s Feed Pause", deviceName),
-	//		UniqueId:            fmt.Sprintf("%s_feedpause_button", controllerName),
-	//		AvailabilityTopic:   "profiluxmqtt/status",
-	//		PayloadAvailable:    "online",
-	//		PayloadNotAvailable: "offline",
-	//		Icon:                "mdi:shaker",
-	//	},
-	//	CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/feedpause", controllerName),
-	//}
-	//
-	//feedButtonMsg, _ := json.Marshal(feedButtonConfig)
-	//profiMqtt.publishHA(mqttClient, log, "button", controllerName, "FeedPause", feedButtonMsg, forceUpdate)
-	//
-	//for _, p := range info.Maintenance {
-	//	name := fmt.Sprintf("Maintenance%d", p.Index)
-	//
-	//	buttonConfig := HaSwitchConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Maintenance %s", deviceName, p.DisplayName),
-	//			UniqueId:            fmt.Sprintf("%s_%s_button", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//			Icon:                "mdi:wrench",
-	//		},
-	//		CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Maintenance/%d/command", controllerName, p.Index),
-	//		StateTopic:   fmt.Sprintf("profiluxmqtt/%s/Maintenance/%d/state", controllerName, p.Index),
-	//	}
-	//	msg, _ := json.Marshal(buttonConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "switch", controllerName, name, msg, forceUpdate)
-	//}
-	//
-	//for _, p := range info.Reminders {
-	//	name := fmt.Sprintf("Reminder%d", p.Index)
-	//
-	//	buttonConfig := HaButtonConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Reminder Reset %s", deviceName, p.Text),
-	//			UniqueId:            fmt.Sprintf("%s_%s_button", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//			Icon:                "mdi:restart",
-	//		},
-	//		CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Reminders/%d/reset", controllerName, p.Index),
-	//	}
-	//
-	//	msg, _ := json.Marshal(buttonConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "button", controllerName, name, msg, forceUpdate)
-	//
-	//	stateConfig := HaStateConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Reminder Overdue %s", deviceName, p.Text),
-	//			UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//			DeviceClass:         "problem",
-	//			Icon:                "mdi:reminder",
-	//		},
-	//		StateTopic: fmt.Sprintf("profiluxmqtt/%s/Reminders/%d/state", controllerName, p.Index),
-	//	}
-	//	msg, _ = json.Marshal(stateConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name, msg, forceUpdate)
-	//}
-	//
-	//probes, _ := controllerRepo.GetProbes()
-	//for _, p := range probes {
-	//	name := p.ID
-	//
-	//	deviceClass := ""
-	//	icon := ""
-	//	switch p.SensorType {
-	//	case types.SensorTypeTemperature:
-	//		deviceClass = "temperature"
-	//	case types.SensorTypeAirTemperature:
-	//		deviceClass = "temperature"
-	//	case types.SensorTypeHumidity:
-	//		deviceClass = "humidity"
-	//	case types.SensorTypeVoltage:
-	//		deviceClass = "voltage"
-	//	case types.SensorTypeConductivity:
-	//		icon = "mdi:alpha-c-circle-outline"
-	//	case types.SensorTypeConductivityF:
-	//		icon = "mdi:alpha-c-circle-outline"
-	//	case types.SensorTypeRedox:
-	//		icon = "mdi:thermometer-probe"
-	//	case types.SensorTypeOxygen:
-	//		icon = "mdi:gas-cylinder"
-	//	case types.SensorTypePH:
-	//		icon = "mdi:ph"
-	//	}
-	//
-	//	stateConfig := HaStateConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Probe %s", deviceName, p.DisplayName),
-	//			UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//			DeviceClass:         deviceClass,
-	//			Icon:                icon,
-	//		},
-	//		StateTopic:        fmt.Sprintf("profiluxmqtt/%s/Probes/%s/convertedvalue", controllerName, name),
-	//		UnitOfMeasurement: p.Units,
-	//	}
-	//	msg, _ := json.Marshal(stateConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name, msg, forceUpdate)
-	//}
-	//
-	//levelSensors, _ := controllerRepo.GetLevelSensors()
-	//for _, p := range levelSensors {
-	//	name := p.ID
-	//	stateConfig := HaStateConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Water Level %s", deviceName, p.DisplayName),
-	//			UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//		},
-	//		StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/state", controllerName, name),
-	//	}
-	//	msgLevel, _ := json.Marshal(stateConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State", msgLevel, forceUpdate)
-	//
-	//	alarmConfig := HaStateConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Water Level Alarm %s", deviceName, p.DisplayName),
-	//			UniqueId:            fmt.Sprintf("%s_%s_alarm", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//			DeviceClass:         "problem",
-	//		},
-	//		StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/alarm", controllerName, name),
-	//	}
-	//	msgAlarm, _ := json.Marshal(alarmConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_Alarm", msgAlarm, forceUpdate)
-	//
-	//	clearAlarmConfig := HaButtonConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Water Level Clear %s Alarm", deviceName, p.DisplayName),
-	//			UniqueId:            fmt.Sprintf("%s_%s_clear_button", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//			Icon:                "mdi:restore",
-	//		},
-	//		CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/clearalarm", controllerName, name),
-	//	}
-	//	msgClearAlarm, _ := json.Marshal(clearAlarmConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "button", controllerName, name, msgClearAlarm, forceUpdate)
-	//
-	//	if p.HasTwoInputs {
-	//		stateConfig2 := HaStateConfig{
-	//			HaBaseConfig: HaBaseConfig{
-	//				Device:              device,
-	//				Name:                fmt.Sprintf("%s Water Level 2 %s", deviceName, p.DisplayName),
-	//				UniqueId:            fmt.Sprintf("%s_%s_state2", controllerName, name),
-	//				AvailabilityTopic:   "profiluxmqtt/status",
-	//				PayloadAvailable:    "online",
-	//				PayloadNotAvailable: "offline",
-	//			},
-	//			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/state2", controllerName, name),
-	//		}
-	//		config2Msg, _ := json.Marshal(stateConfig2)
-	//		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State2", config2Msg, forceUpdate)
-	//	}
-	//
-	//	if p.HasWaterChange {
-	//		waterChangeConfig := HaStateConfig{
-	//			HaBaseConfig: HaBaseConfig{
-	//				Device:              device,
-	//				Name:                fmt.Sprintf("%s Water Change State %s", deviceName, p.DisplayName),
-	//				UniqueId:            fmt.Sprintf("%s_%s_water_change", controllerName, name),
-	//				AvailabilityTopic:   "profiluxmqtt/status",
-	//				PayloadAvailable:    "online",
-	//				PayloadNotAvailable: "offline",
-	//				Icon:                "mdi:water-sync",
-	//			},
-	//			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/waterchange", controllerName, name),
-	//		}
-	//		waterChangeMsg, _ := json.Marshal(waterChangeConfig)
-	//		profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name+"_WaterChange", waterChangeMsg, forceUpdate)
-	//
-	//		startWaterChange := HaButtonConfig{
-	//			HaBaseConfig: HaBaseConfig{
-	//				Device:              device,
-	//				Name:                fmt.Sprintf("%s Start Water Change %s", deviceName, p.DisplayName),
-	//				UniqueId:            fmt.Sprintf("%s_%s_water_change_button", controllerName, name),
-	//				AvailabilityTopic:   "profiluxmqtt/status",
-	//				PayloadAvailable:    "online",
-	//				PayloadNotAvailable: "offline",
-	//				Icon:                "mdi:water-sync",
-	//			},
-	//			CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/startwaterchange", controllerName, name),
-	//		}
-	//		msgStartWaterChange, _ := json.Marshal(startWaterChange)
-	//		profiMqtt.publishHA(mqttClient, log, "button", controllerName, name+"_StartWaterChange", msgStartWaterChange, forceUpdate)
-	//	}
-	//}
+
+	feedButtonConfig := HaButtonConfig{
+		HaBaseConfig: HaBaseConfig{
+			Device:              device,
+			Name:                fmt.Sprintf("%s Feed Pause", deviceName),
+			UniqueId:            fmt.Sprintf("%s_feedpause_button", controllerName),
+			AvailabilityTopic:   "profiluxmqtt/status",
+			PayloadAvailable:    "online",
+			PayloadNotAvailable: "offline",
+			Icon:                "mdi:shaker",
+		},
+		CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/feedpause", controllerName),
+	}
+
+	feedButtonMsg, _ := json.Marshal(feedButtonConfig)
+	profiMqtt.publishHA(mqttClient, log, "button", controllerName, "FeedPause", feedButtonMsg, forceUpdate)
+
+	for _, p := range info.Maintenance {
+		name := fmt.Sprintf("Maintenance%d", p.Index)
+
+		buttonConfig := HaSwitchConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Maintenance %s", deviceName, p.DisplayName),
+				UniqueId:            fmt.Sprintf("%s_%s_button", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+				Icon:                "mdi:wrench",
+			},
+			CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Maintenance/%d/command", controllerName, p.Index),
+			StateTopic:   fmt.Sprintf("profiluxmqtt/%s/Maintenance/%d/state", controllerName, p.Index),
+		}
+		msg, _ := json.Marshal(buttonConfig)
+		profiMqtt.publishHA(mqttClient, log, "switch", controllerName, name, msg, forceUpdate)
+	}
+
+	for _, p := range info.Reminders {
+		name := fmt.Sprintf("Reminder%d", p.Index)
+
+		buttonConfig := HaButtonConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Reminder Reset %s", deviceName, p.Text),
+				UniqueId:            fmt.Sprintf("%s_%s_button", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+				Icon:                "mdi:restart",
+			},
+			CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Reminders/%d/reset", controllerName, p.Index),
+		}
+
+		msg, _ := json.Marshal(buttonConfig)
+		profiMqtt.publishHA(mqttClient, log, "button", controllerName, name, msg, forceUpdate)
+
+		stateConfig := HaStateConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Reminder Overdue %s", deviceName, p.Text),
+				UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+				DeviceClass:         "problem",
+				Icon:                "mdi:reminder",
+			},
+			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Reminders/%d/state", controllerName, p.Index),
+		}
+		msg, _ = json.Marshal(stateConfig)
+		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name, msg, forceUpdate)
+	}
+
+	probes, _ := controllerRepo.GetProbes()
+	for _, p := range probes {
+		name := p.ID
+
+		deviceClass := ""
+		icon := ""
+		switch p.SensorType {
+		case types.SensorTypeTemperature:
+			deviceClass = "temperature"
+		case types.SensorTypeAirTemperature:
+			deviceClass = "temperature"
+		case types.SensorTypeHumidity:
+			deviceClass = "humidity"
+		case types.SensorTypeVoltage:
+			deviceClass = "voltage"
+		case types.SensorTypeConductivity:
+			icon = "mdi:alpha-c-circle-outline"
+		case types.SensorTypeConductivityF:
+			icon = "mdi:alpha-c-circle-outline"
+		case types.SensorTypeRedox:
+			icon = "mdi:thermometer-probe"
+		case types.SensorTypeOxygen:
+			icon = "mdi:gas-cylinder"
+		case types.SensorTypePH:
+			icon = "mdi:ph"
+		}
+
+		stateConfig := HaStateConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Probe %s", deviceName, p.DisplayName),
+				UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+				DeviceClass:         deviceClass,
+				Icon:                icon,
+			},
+			StateTopic:        fmt.Sprintf("profiluxmqtt/%s/Probes/%s/convertedvalue", controllerName, name),
+			UnitOfMeasurement: p.Units,
+		}
+		msg, _ := json.Marshal(stateConfig)
+		profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name, msg, forceUpdate)
+	}
+
+	levelSensors, _ := controllerRepo.GetLevelSensors()
+	for _, p := range levelSensors {
+		name := p.ID
+		stateConfig := HaStateConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Water Level %s", deviceName, p.DisplayName),
+				UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+			},
+			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/state", controllerName, name),
+		}
+		msgLevel, _ := json.Marshal(stateConfig)
+		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State", msgLevel, forceUpdate)
+
+		alarmConfig := HaStateConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Water Level Alarm %s", deviceName, p.DisplayName),
+				UniqueId:            fmt.Sprintf("%s_%s_alarm", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+				DeviceClass:         "problem",
+			},
+			StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/alarm", controllerName, name),
+		}
+		msgAlarm, _ := json.Marshal(alarmConfig)
+		profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_Alarm", msgAlarm, forceUpdate)
+
+		clearAlarmConfig := HaButtonConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Water Level Clear %s Alarm", deviceName, p.DisplayName),
+				UniqueId:            fmt.Sprintf("%s_%s_clear_button", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+				Icon:                "mdi:restore",
+			},
+			CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/clearalarm", controllerName, name),
+		}
+		msgClearAlarm, _ := json.Marshal(clearAlarmConfig)
+		profiMqtt.publishHA(mqttClient, log, "button", controllerName, name, msgClearAlarm, forceUpdate)
+
+		if p.HasTwoInputs {
+			stateConfig2 := HaStateConfig{
+				HaBaseConfig: HaBaseConfig{
+					Device:              device,
+					Name:                fmt.Sprintf("%s Water Level 2 %s", deviceName, p.DisplayName),
+					UniqueId:            fmt.Sprintf("%s_%s_state2", controllerName, name),
+					AvailabilityTopic:   "profiluxmqtt/status",
+					PayloadAvailable:    "online",
+					PayloadNotAvailable: "offline",
+				},
+				StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/state2", controllerName, name),
+			}
+			config2Msg, _ := json.Marshal(stateConfig2)
+			profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, name+"_State2", config2Msg, forceUpdate)
+		}
+
+		if p.HasWaterChange {
+			waterChangeConfig := HaStateConfig{
+				HaBaseConfig: HaBaseConfig{
+					Device:              device,
+					Name:                fmt.Sprintf("%s Water Change State %s", deviceName, p.DisplayName),
+					UniqueId:            fmt.Sprintf("%s_%s_water_change", controllerName, name),
+					AvailabilityTopic:   "profiluxmqtt/status",
+					PayloadAvailable:    "online",
+					PayloadNotAvailable: "offline",
+					Icon:                "mdi:water-sync",
+				},
+				StateTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/waterchange", controllerName, name),
+			}
+			waterChangeMsg, _ := json.Marshal(waterChangeConfig)
+			profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name+"_WaterChange", waterChangeMsg, forceUpdate)
+
+			startWaterChange := HaButtonConfig{
+				HaBaseConfig: HaBaseConfig{
+					Device:              device,
+					Name:                fmt.Sprintf("%s Start Water Change %s", deviceName, p.DisplayName),
+					UniqueId:            fmt.Sprintf("%s_%s_water_change_button", controllerName, name),
+					AvailabilityTopic:   "profiluxmqtt/status",
+					PayloadAvailable:    "online",
+					PayloadNotAvailable: "offline",
+					Icon:                "mdi:water-sync",
+				},
+				CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/startwaterchange", controllerName, name),
+			}
+			msgStartWaterChange, _ := json.Marshal(startWaterChange)
+			profiMqtt.publishHA(mqttClient, log, "button", controllerName, name+"_StartWaterChange", msgStartWaterChange, forceUpdate)
+		}
+	}
 
 	sockets, _ := controllerRepo.GetSPorts()
 	for _, p := range sockets {
@@ -456,29 +456,29 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 		profiMqtt.publishHA(mqttClient, log, "switch", controllerName, name, msgLevel, forceUpdate)
 	}
 
-	//lightPorts, _ := controllerRepo.GetLPorts()
-	//for _, p := range lightPorts {
-	//	name := p.ID
-	//	if p.DisplayName == "" {
-	//		p.DisplayName = p.ID
-	//	}
-	//
-	//	class, icon := GetSensorMode(p.Mode, controllerRepo)
-	//	stateConfig := HaStateConfig{
-	//		HaBaseConfig: HaBaseConfig{
-	//			Device:              device,
-	//			Name:                fmt.Sprintf("%s Variable Socket %s", deviceName, p.DisplayName),
-	//			UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
-	//			AvailabilityTopic:   "profiluxmqtt/status",
-	//			PayloadAvailable:    "online",
-	//			PayloadNotAvailable: "offline",
-	//			DeviceClass:         class,
-	//			Icon:                icon,
-	//		},
-	//		StateTopic:        fmt.Sprintf("profiluxmqtt/%s/LPorts/%s/state", controllerName, name),
-	//		UnitOfMeasurement: "%",
-	//	}
-	//	msgLevel, _ := json.Marshal(stateConfig)
-	//	profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name, msgLevel, forceUpdate)
-	//}
+	lightPorts, _ := controllerRepo.GetLPorts()
+	for _, p := range lightPorts {
+		name := p.ID
+		if p.DisplayName == "" {
+			p.DisplayName = p.ID
+		}
+
+		class, icon := GetSensorMode(p.Mode, controllerRepo)
+		stateConfig := HaStateConfig{
+			HaBaseConfig: HaBaseConfig{
+				Device:              device,
+				Name:                fmt.Sprintf("%s Variable Socket %s", deviceName, p.DisplayName),
+				UniqueId:            fmt.Sprintf("%s_%s_state", controllerName, name),
+				AvailabilityTopic:   "profiluxmqtt/status",
+				PayloadAvailable:    "online",
+				PayloadNotAvailable: "offline",
+				DeviceClass:         class,
+				Icon:                icon,
+			},
+			StateTopic:        fmt.Sprintf("profiluxmqtt/%s/LPorts/%s/state", controllerName, name),
+			UnitOfMeasurement: "%",
+		}
+		msgLevel, _ := json.Marshal(stateConfig)
+		profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name, msgLevel, forceUpdate)
+	}
 }
