@@ -67,6 +67,10 @@ func info(controller *profilux.Controller, repo service.Controller) error {
 		return err
 	}
 
+	if info.OperationMode == types.OperationModeManualSockets {
+		controller.SetOperationMode(types.OperationModeManualSockets)
+	}
+
 	for i := 0; i < 4; i++ {
 		err = updateMaintenanceMode(controller, &info, i)
 		if err != nil {
@@ -186,6 +190,11 @@ func InfoState(controller *profilux.Controller, repo service.Controller) error {
 	if err != nil {
 		return err
 	}
+
+	if info.OperationMode == types.OperationModeManualSockets {
+		controller.SetOperationMode(types.OperationModeManualSockets)
+	}
+
 	info.MoonPhase, err = controller.GetMoonPhase()
 	if err != nil {
 		return err

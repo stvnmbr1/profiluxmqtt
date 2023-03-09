@@ -35,7 +35,7 @@ func sPortUpdateState(port *models.SPort, controller *profilux.Controller) error
 	return nil
 }
 
-func sPorts(profiluxController *profilux.Controller, repo service.Controller) error {
+func SPorts(profiluxController *profilux.Controller, repo service.Controller) error {
 	count, err := profiluxController.GetSPortCount()
 	if err != nil {
 		return err

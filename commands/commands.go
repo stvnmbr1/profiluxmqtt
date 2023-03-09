@@ -4,11 +4,12 @@ import (
 	"github.com/cjburchell/profiluxmqtt/data/repo"
 	"github.com/cjburchell/profiluxmqtt/models"
 	"github.com/cjburchell/profiluxmqtt/profilux"
+	"github.com/cjburchell/profiluxmqtt/profilux/types"
 	"github.com/cjburchell/profiluxmqtt/update"
 	logger "github.com/cjburchell/uatu-go"
 )
 
-func FeedPause(bool bool, repo repo.Controller, log logger.ILog, config profilux.Settings) {
+func FeedPause(enabled bool, repo repo.Controller, log logger.ILog, config profilux.Settings) {
 	profiluxController, err := profilux.NewController(config)
 	if err != nil {
 		log.Errorf(err, "unable to connect")
@@ -17,7 +18,7 @@ func FeedPause(bool bool, repo repo.Controller, log logger.ILog, config profilux
 
 	defer profiluxController.Disconnect()
 
-	err = profiluxController.FeedPause(0, bool)
+	err = profiluxController.FeedPause(0, enabled)
 	if err != nil {
 		log.Errorf(err, "Unable to send feed pause")
 		return
@@ -210,6 +211,60 @@ func WaterChange(id string, repo repo.Controller, log logger.ILog, config profil
 	err = update.InfoState(profiluxController, repo)
 	if err != nil {
 		log.Errorf(err, "Unable update state")
+		return
+	}
+}
+
+func ManualSockets(enable bool, repo repo.Controller, log logger.ILog, config profilux.Settings) {
+	profiluxController, err := profilux.NewController(config)
+	if err != nil {
+		log.Errorf(err, "unable to connect")
+		return
+	}
+	defer profiluxController.Disconnect()
+
+	mode := types.OperationModeNormal
+	if enable {
+		mode = types.OperationModeManualSockets
+	}
+
+	err = profiluxController.SetOperationMode(mode)
+	if err != nil {
+		log.Errorf(err, "Unable to send feed pause")
+		return
+	}
+
+	err = update.InfoState(profiluxController, repo)
+	if err != nil {
+		log.Errorf(err, "Unable update state")
+		return
+	}
+}
+
+func SetSocketState(id string, enable bool, repo repo.Controller, log logger.ILog, config profilux.Settings) {
+	profiluxController, err := profilux.NewController(config)
+	if err != nil {
+		log.Errorf(err, "unable to connect")
+		return
+	}
+
+	defer profiluxController.Disconnect()
+
+	port, err := repo.GetSPort(id)
+	if err != nil {
+		log.Errorf(err, "Unable find socket with id of %s", id)
+		return
+	}
+
+	err = profiluxController.SetSPortValue(port.PortNumber, enable)
+	if err != nil {
+		log.Errorf(err, "Unable to set socket id")
+		return
+	}
+
+	err = update.SPorts(profiluxController, repo)
+	if err != nil {
+		log.Errorf(err, "Unable update ports")
 		return
 	}
 }

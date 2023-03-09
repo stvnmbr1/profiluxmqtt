@@ -864,3 +864,49 @@ func (controller *Controller) Maintenance(activate bool, index int) error {
 
 	return controller.p.SendData(code.INVOKESPECIALFUNCTION, command)
 }
+
+func (controller *Controller) SetOperationMode(mode string) error {
+	return controller.p.SendData(code.OPMODE, types.GetOperationIndex(mode))
+}
+
+func (controller *Controller) SetSPortValue(portNumber int, enable bool) error {
+	index := portNumber % 24
+	offset := (portNumber / 24) * megaBlockSize
+	manualOverride, err := controller.p.GetData(code.SP_ALL_MANU + offset)
+	if err != nil {
+		return err
+	}
+	if enable {
+		manualOverride |= 1 << index
+	} else {
+		manualOverride &= ^(1 << index)
+	}
+
+	err = controller.p.SendData(code.SP_ALL_MANU+offset, manualOverride)
+	if err != nil {
+		return err
+	}
+
+	sendCode := code.SP_ALL_STATE + offset
+	allState, err := controller.p.GetData(sendCode)
+	if err != nil {
+		return err
+	}
+	if enable {
+		allState |= 1 << index
+	} else {
+		allState &= ^(1 << index)
+	}
+
+	err = controller.p.SendData(sendCode, allState)
+	if err != nil {
+		return err
+	}
+
+	state := 0
+	if enable {
+		state = 1
+	}
+	sendCode = code.SP1_STATE + getOffset(portNumber, 24, 1)
+	return controller.p.SendData(sendCode, state)
+}

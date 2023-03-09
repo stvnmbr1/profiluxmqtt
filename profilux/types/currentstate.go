@@ -12,3 +12,11 @@ func GetCurrentState(value int) CurrentState {
 
 	return CurrentStateOff
 }
+
+func GetCurrentStateBool(value bool) CurrentState {
+	if value {
+		return CurrentStateOn
+	}
+
+	return CurrentStateOff
+}

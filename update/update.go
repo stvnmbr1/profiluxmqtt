@@ -59,7 +59,7 @@ func All(repo service.Controller, log logger.ILog, config profilux.Settings) err
 		return err
 	}
 
-	err = sPorts(profiluxController, repo)
+	err = SPorts(profiluxController, repo)
 	if err != nil {
 		return err
 	}

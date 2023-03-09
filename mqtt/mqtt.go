@@ -68,11 +68,12 @@ func (profiMqtt *ProfiluxMqtt) PublishMQTT(mqttClient mqtt.Client, log logger.IL
 func (profiMqtt *ProfiluxMqtt) UpdateMQTT(controllerRepo repo.Controller, mqttClient mqtt.Client, log logger.ILog, forceUpdate bool) {
 	info, _ := controllerRepo.GetInfo()
 	msg, _ := json.Marshal(info)
-	controllerName := sanitize(string(info.Model)) + "_" + fmt.Sprintf("%d", info.DeviceAddress)
+	controllerName := fmt.Sprintf("%s_%d%s", sanitize(string(info.Model)), info.DeviceAddress, suffix)
 	profiMqtt.PublishMQTT(mqttClient, log, "status", "online", forceUpdate)
 	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/data", string(msg), forceUpdate)
 	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/alarm", string(info.Alarm), forceUpdate)
 	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/mode", string(info.OperationMode), forceUpdate)
+	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/ManualSockets/state", string(types.GetCurrentStateBool(info.OperationMode == types.OperationModeManualSockets)), forceUpdate)
 
 	for _, p := range info.Maintenance {
 		path := fmt.Sprintf("%s/Maintenance/%d", controllerName, p.Index)

@@ -1222,9 +1222,13 @@ const (
 
 	// The s p_ al l_ state.
 
+	SP_ALL_MANU = 10125
+
 	SP_ALL_STATE = 10126
 
 	SP_ALL_CURRENT = 10127
+
+	SP_ALL_CURRENT_HI_RES = 10128
 
 	// The slotcount.
 
@@ -1628,6 +1632,6 @@ const (
 
 	MULTIPLECODEINFO_19999 = 39999
 
-// ReSharper restore InconsistentNaming
-// ReSharper restore UnusedMember.Global
+	// ReSharper restore InconsistentNaming
+	// ReSharper restore UnusedMember.Global
 )
