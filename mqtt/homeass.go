@@ -61,6 +61,7 @@ type HaStateConfig struct {
 type HaButtonConfig struct {
 	HaBaseConfig
 	CommandTopic string `json:"command_topic"`
+	StateTopic   string `json:"state_topic"`
 }
 
 type HaSwitchConfig struct {
@@ -230,6 +231,7 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 			Icon:                "mdi:shaker",
 		},
 		CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/feedpause", controllerName),
+		StateTopic:   "profiluxmqtt/status",
 	}
 
 	feedButtonMsg, _ := json.Marshal(feedButtonConfig)
@@ -269,6 +271,7 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 				Icon:                "mdi:restart",
 			},
 			CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Reminders/%d/reset", controllerName, p.Index),
+			StateTopic:   "profiluxmqtt/status",
 		}
 
 		msg, _ := json.Marshal(buttonConfig)
@@ -379,6 +382,7 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 				Icon:                "mdi:restore",
 			},
 			CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/clearalarm", controllerName, name),
+			StateTopic:   "profiluxmqtt/status",
 		}
 		msgClearAlarm, _ := json.Marshal(clearAlarmConfig)
 		profiMqtt.publishHA(mqttClient, log, "button", controllerName, name, msgClearAlarm, forceUpdate)
@@ -426,6 +430,7 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 					Icon:                "mdi:water-sync",
 				},
 				CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Level/%s/startwaterchange", controllerName, name),
+				StateTopic:   "profiluxmqtt/status",
 			}
 			msgStartWaterChange, _ := json.Marshal(startWaterChange)
 			profiMqtt.publishHA(mqttClient, log, "button", controllerName, name+"_StartWaterChange", msgStartWaterChange, forceUpdate)
