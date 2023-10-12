@@ -35,6 +35,9 @@ func main() {
 	controllerRepo := repo.NewController()
 
 	mqttOptions := mqtt.NewClientOptions().AddBroker(fmt.Sprintf("mqtt://%s:%d", appConfig.MqttHost, appConfig.MqttPort)).SetClientID(appConfig.ClientID)
+
+	mqttOptions.Username = appConfig.MqttUser
+	mqttOptions.Password = appConfig.MqttPassword
 	mqttOptions.SetOrderMatters(false)       // Allow out of order messages (use this option unless in order delivery is essential)
 	mqttOptions.ConnectTimeout = time.Second // Minimal delays on connect
 	mqttOptions.WriteTimeout = time.Second   // Minimal delays on writes
