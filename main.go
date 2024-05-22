@@ -42,8 +42,8 @@ func main() {
 	mqttOptions.PingTimeout = time.Second    // local broker so response should be quick
 	mqttOptions.ConnectRetry = true
 	mqttOptions.AutoReconnect = true
-        mqttOptions.SetUsername("mqttpub")
-        mqttOptions.SetPassword("hassiopub")
+        mqttOptions.SetUsername("")
+        mqttOptions.SetPassword("")
 
 
 	mqttOptions.OnConnectionLost = func(cl mqtt.Client, err error) {
