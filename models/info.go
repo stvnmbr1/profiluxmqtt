@@ -21,6 +21,31 @@ type Info struct {
 	SerialNumber    int
 	LastUpdate      time.Time
 	Reminders       []Reminder
+	KHDSerialNumber int
+	KHDSoftwareVersion float64
+	KHDKHMeasurement float64
+	KHDSoftwareDate	time.Time
+	Temperature	float64
+	SA_PUMP1_NAME	string
+	SA_PUMP1_REMAINING_ML int
+        SA_PUMP1_REMAINING_DAYS float64
+	SA_PUMP1_DAILY_DOSE	int
+	SA_PUMP1_CONT_CAPACITY	int
+        SA_PUMP2_NAME   string
+        SA_PUMP2_REMAINING_ML int
+        SA_PUMP2_REMAINING_DAYS float64
+        SA_PUMP2_DAILY_DOSE     int
+        SA_PUMP2_CONT_CAPACITY  int
+        SA_PUMP3_NAME   string
+        SA_PUMP3_REMAINING_ML int
+        SA_PUMP3_REMAINING_DAYS float64
+        SA_PUMP3_DAILY_DOSE     int
+        SA_PUMP3_CONT_CAPACITY  int
+        SA_PUMP4_NAME   string
+        SA_PUMP4_REMAINING_ML int
+        SA_PUMP4_REMAINING_DAYS float64
+        SA_PUMP4_DAILY_DOSE     int
+        SA_PUMP4_CONT_CAPACITY  int
 }
 
 // NewInfo creates new object

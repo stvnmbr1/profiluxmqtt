@@ -15,6 +15,7 @@ const (
 	ProfiLuxIIOutdoor = "ProfiLux II Outdoor"
 	ProfiLuxIII       = "ProfiLux III"
 	ProfiLuxIIIEx     = "ProfiLux III Ex"
+        SADoser1          = "GHL Doser 2/2.1"
 )
 
 func GetModel(id int) string {
@@ -36,4 +37,5 @@ var productIdMap = map[int]string{
 	8:  ProfiLuxIIOutdoor,
 	11: ProfiLuxIII,
 	12: ProfiLuxIIIEx,
+        50: SADoser1,
 }

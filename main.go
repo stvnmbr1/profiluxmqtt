@@ -23,7 +23,7 @@ import (
 func main() {
 	set := settings.Get(env.Get("ConfigFile", ""))
 	log := logger.Create(logger.Settings{
-		MinLogLevel:  logger.GetLogLevel(set.Get("MinLogLevel", logger.INFO.Text)),
+		MinLogLevel:  logger.GetLogLevel(set.Get("MinLogLevel", logger.DEBUG.Text)),
 		ServiceName:  "Profilux MQTT",
 		LogToConsole: true,
 		UseHTTP:      false,
@@ -42,6 +42,9 @@ func main() {
 	mqttOptions.PingTimeout = time.Second    // local broker so response should be quick
 	mqttOptions.ConnectRetry = true
 	mqttOptions.AutoReconnect = true
+        mqttOptions.SetUsername("mqttpub")
+        mqttOptions.SetPassword("hassiopub")
+
 
 	mqttOptions.OnConnectionLost = func(cl mqtt.Client, err error) {
 		log.Warn("connection lost")

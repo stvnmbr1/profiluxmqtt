@@ -8,7 +8,7 @@ import (
 func Get(settings settings.ISettings) Config {
 	return Config{
 		Connection: newConnectionSettings(settings),
-		MqttHost:   settings.Get("MQTT_HOST", "localhost"),
+		MqttHost:   settings.Get("MQTT_HOST", "192.168.0.160"),
 		MqttPort:   settings.GetInt("MQTT_PORT", 1883),
 		ClientID:   settings.Get("CLIENT_ID", "profilux-mqtt"),
 	}
@@ -22,9 +22,9 @@ type Config struct {
 }
 
 func newConnectionSettings(settings settings.ISettings) (connection profilux.Settings) {
-	connection.Address = settings.Get("PROFILUX_HOST", "192.168.3.10")
-	connection.Port = settings.GetInt("PROFILUX_PORT", 80)
-	connection.Protocol = profilux.ProtocolHTTP
-	connection.ControllerAddress = 1
+	connection.Address = settings.Get("PROFILUX_HOST", "192.168.0.30")
+	connection.Port = settings.GetInt("PROFILUX_PORT", 10001)
+	connection.Protocol = profilux.ProtocolSocket
+	connection.ControllerAddress = 0
 	return
 }

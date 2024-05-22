@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cjburchell/profiluxmqtt/data/repo"
-	"github.com/cjburchell/profiluxmqtt/profilux/types"
+//	"github.com/cjburchell/profiluxmqtt/profilux/types"
 	logger "github.com/cjburchell/uatu-go"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"strings"
@@ -68,76 +68,74 @@ func (profiMqtt *ProfiluxMqtt) PublishMQTT(mqttClient mqtt.Client, log logger.IL
 func (profiMqtt *ProfiluxMqtt) UpdateMQTT(controllerRepo repo.Controller, mqttClient mqtt.Client, log logger.ILog, forceUpdate bool) {
 	info, _ := controllerRepo.GetInfo()
 	msg, _ := json.Marshal(info)
-	controllerName := fmt.Sprintf("%s_%d%s", sanitize(string(info.Model)), info.DeviceAddress, suffix)
+
+/////////// new code - KH Director
+
+
+	khdControllerName := fmt.Sprintf("KH_Director_%v", info.KHDSerialNumber)
+
+        profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/KHMeasurement", fmt.Sprintf("%v",info.KHDKHMeasurement), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/LastMeasurement", fmt.Sprintf("%v",info.KHDLastMeasurement), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/MeasurementPerDay", fmt.Sprintf("%v",info.KHDKHMeasurement), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/SetValue", fmt.Sprintf("%v",info.KHDKHMeasurement), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/UpperLimit", fmt.Sprintf("%v",info.KHDKHMeasurement), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/LowerLimit", fmt.Sprintf("%v",info.KHDKHMeasurement), forceUpdate)
+//	profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/PH", fmt.Sprintf("%v",info.KHDKHMeasurement), forceUpdate)
+//	profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/ADC1", fmt.Sprintf("%v",info.KHDADC1), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+"/ADC2", fmt.Sprintf("%v",info.KHDADC2), forceUpdate)
+
+
+
+///////////// old code
+
+	controllerName := fmt.Sprintf("%s_%d%s", sanitize(string(info.Model)), info.SerialNumber, suffix)
 	profiMqtt.PublishMQTT(mqttClient, log, "status", "online", forceUpdate)
 	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/data", string(msg), forceUpdate)
-	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/alarm", string(info.Alarm), forceUpdate)
-	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/mode", string(info.OperationMode), forceUpdate)
-	profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Controller/ManualSockets/state", string(types.GetCurrentStateBool(info.OperationMode == types.OperationModeManualSockets)), forceUpdate)
 
-	for _, p := range info.Maintenance {
-		path := fmt.Sprintf("%s/Maintenance/%d", controllerName, p.Index)
-		data, _ := json.Marshal(p)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", strings.ToUpper(string(p.IsActive)), forceUpdate)
-	}
+///////////
 
-	for _, p := range info.Reminders {
-		path := fmt.Sprintf("%s/Reminders/%d", controllerName, p.Index)
-		data, _ := json.Marshal(p)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", string(p.IsOverdue), forceUpdate)
-	}
+////////// new code - Standalone doser
 
-	probes, _ := controllerRepo.GetProbes()
-	for _, p := range probes {
-		path := fmt.Sprintf("%s/Probes/%s", controllerName, p.ID)
-		if p.SensorType == types.SensorTypeAirTemperature {
-			if p.Value > 35 || p.Value < -30 {
-				if forceUpdate {
-					profiMqtt.PublishMQTTOld(mqttClient, log, path+"/data")
-					profiMqtt.PublishMQTTOld(mqttClient, log, path+"/state")
-					profiMqtt.PublishMQTTOld(mqttClient, log, path+"/convertedvalue")
-				}
-				continue
-			}
-		}
-		data, _ := json.Marshal(p)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/setpoint", fmt.Sprintf("%.2f", p.CenterValue), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/convertedvalue", fmt.Sprintf("%.2f", p.ConvertedValue), forceUpdate)
-	}
+//        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/IPAddress", fmt.Sprintf("%v",info.SA_IP_ADDRESS), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/WIFISSID", fmt.Sprintf("%v",info.SA_WIFI_SSID), forceUpdate)
+//        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/SoftwareDate", fmt.Sprintf("%v",info.SA_SOFTWAREDATE), forceUpdate)
 
-	levelSensors, _ := controllerRepo.GetLevelSensors()
-	for _, p := range levelSensors {
-		path := fmt.Sprintf("%s/Level/%s", controllerName, p.ID)
-		data, _ := json.Marshal(p)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", string(p.Value), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/alarm", string(p.AlarmState), forceUpdate)
-		if p.HasTwoInputs {
-			profiMqtt.PublishMQTT(mqttClient, log, path+"/state2", string(p.SecondSensor), forceUpdate)
-		}
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/Temperature", fmt.Sprintf("%v",info.Temperature), forceUpdate)
 
-		if p.HasWaterChange {
-			profiMqtt.PublishMQTT(mqttClient, log, path+"/waterchange", string(p.WaterMode), forceUpdate)
-		}
-	}
+//////////////
 
-	sockets, _ := controllerRepo.GetSPorts()
-	for _, p := range sockets {
-		path := fmt.Sprintf("%s/SPorts/%s", controllerName, p.ID)
-		data, _ := json.Marshal(p)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", string(p.Value), forceUpdate)
-	}
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_1_name",fmt.Sprintf("%v",info.SA_PUMP1_NAME), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_1_remaining_ml", fmt.Sprintf("%v",info.SA_PUMP1_REMAINING_ML), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_1_remaining_days", fmt.Sprintf("%v",info.SA_PUMP1_REMAINING_DAYS), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_1_daily_dose", fmt.Sprintf("%v",info.SA_PUMP1_DAILY_DOSE), forceUpdate)
 
-	lightPorts, _ := controllerRepo.GetLPorts()
-	for _, p := range lightPorts {
-		path := fmt.Sprintf("%s/LPorts/%s", controllerName, p.ID)
-		data, _ := json.Marshal(p)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/data", string(data), forceUpdate)
-		profiMqtt.PublishMQTT(mqttClient, log, path+"/state", fmt.Sprintf("%.2f", p.Value), forceUpdate)
-	}
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_2_name",fmt.Sprintf("%v",info.SA_PUMP2_NAME), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_2_remaining_ml", fmt.Sprintf("%v",info.SA_PUMP2_REMAINING_ML), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_2_daily_dose", fmt.Sprintf("%v",info.SA_PUMP2_DAILY_DOSE), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_2_remaining_days", fmt.Sprintf("%v",info.SA_PUMP2_REMAINING_DAYS), forceUpdate)
+
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_3_name",fmt.Sprintf("%v",info.SA_PUMP3_NAME), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_3_remaining_ml", fmt.Sprintf("%v",info.SA_PUMP3_REMAINING_ML), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_3_daily_dose", fmt.Sprintf("%v",info.SA_PUMP3_DAILY_DOSE), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_3_remaining_days", fmt.Sprintf("%v",info.SA_PUMP3_REMAINING_DAYS), forceUpdate)
+
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_4_name",fmt.Sprintf("%v",info.SA_PUMP4_NAME), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_4_remaining_ml", fmt.Sprintf("%v",info.SA_PUMP4_REMAINING_ML), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_4_daily_dose", fmt.Sprintf("%v",info.SA_PUMP4_DAILY_DOSE), forceUpdate)
+        profiMqtt.PublishMQTT(mqttClient, log, controllerName+"/pump_4_remaining_days", fmt.Sprintf("%v",info.SA_PUMP4_REMAINING_DAYS), forceUpdate)
+
+
+//	for i:=1; i<5; i++{
+//
+//		profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+fmt.Sprintf("/pump_%v_name",i), fmt.Sprintf("%v",fmt.Sprintf("info.SA_PUMP%v_NAME",i)), forceUpdate)
+  //              profiMqtt.PublishMQTT(mqttClient, log, khdControllerName+fmt.Sprintf("/pump_%v_remaining_ml",i), fmt.Sprintf("%v",fmt.Sprintf("info.SA_PUMP%v_REMAINING_ML",i)), forceUpdate)
+//
+//	}
+
+
+////////
+
+
+
+
 }

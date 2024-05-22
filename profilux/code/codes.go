@@ -12,6 +12,148 @@ const (
 	// Codes für Kommunikation
 	// Codes fuer allgem. Werte
 
+
+// Standalone Doser - Device
+
+        SA_SOFTWAREVERSION = 0
+
+        SA_SOFTWAREDATE = 1
+
+        SA_PRODUCTID = 2
+
+        SA_SERIALNUMBER = 6
+
+        SA_IP_ADDRESS = 900
+
+        SA_IP_SUBNET = 908
+
+        SA_IP_GATEWAY = 916
+
+        SA_DEVICEPORT = 850
+
+        SA_WIFI_SSID = 855
+
+        SA_SSID_PSW = 865
+
+        SA_DEVICE_PSW = 959
+
+        SA_MYGHLID = 10141
+
+
+
+// Standalone Doser - Components
+
+// SA Temperature probe
+
+        SA_TEMPERATURE = 10000
+
+// KHD
+
+        KHD_SOFTWAREVERSION = 10431
+
+        KHD_SERIALNUMBER = 10410
+
+        KHD_KH_MEASUREMENT = 806
+
+        KHD_SET_VALUE = 775
+
+        KHD_MEASURE_PERDAY = 772
+
+        KHD_UPPER_LIMIT = 802
+
+        KHD_LOWER_LIMIT = 801
+
+        KHD_SAMPLE_VOLUME_ML = 774
+
+        KHD_SAMPLE_TUBE_ML = 803
+
+        KHD_PH = 0
+
+        KHD_ADC1 = 776
+
+        KHD_ADC2 = 777
+
+
+//DOSER
+
+        SA_PUMP1_NAME = 600
+
+        SA_PUMP1_REMAINING_ML = 10311
+
+        SA_PUMP1_DAILY_DOSE_ML = 10314
+
+        SA_PUMP1_REMAINING_DAYS = 10315
+
+        SA_PUMP1_CONT_CAPACITY = 31
+
+        SA_PUMP1_CONT_MINIMUM = 32
+
+        SA_PUMP1_CONT_ALARM_BELOW = 117
+
+        SA_PUMP1_MAX_FLOW = 13
+
+
+        SA_PUMP2_NAME = 608
+
+        SA_PUMP2_REMAINING_ML = 10317
+
+        SA_PUMP2_DAILY_DOSE_ML = 10320
+
+        SA_PUMP2_REMAINING_DAYS = 10321
+
+        SA_PUMP2_CONT_CAPACITY = 59
+
+        SA_PUMP2_CONT_MINIMUM = 60
+
+        SA_PUMP2_CONT_ALARM_BELOW = 61
+
+        SA_PUMP2_MAX_FLOW = 41
+
+
+	SA_PUMP3_NAME = 616
+
+        SA_PUMP3_REMAINING_ML = 10323
+
+        SA_PUMP3_DAILY_DOSE_ML = 10325
+
+        SA_PUMP3_REMAINING_DAYS = 10326
+
+        SA_PUMP3_CONT_CAPACITY = 87
+
+        SA_PUMP3_CONT_MINIMUM = 88
+
+        SA_PUMP3_CONT_ALARM_BELOW = 89
+
+        SA_PUMP3_MAX_FLOW = 69
+
+
+        SA_PUMP4_NAME = 624
+
+        SA_PUMP4_REMAINING_ML = 10329
+
+        SA_PUMP4_DAILY_DOSE_ML = 10331
+
+        SA_PUMP4_REMAINING_DAYS = 10332
+
+        SA_PUMP4_CONT_CAPACITY = 115
+
+        SA_PUMP4_CONT_MINIMUM = 116
+
+        SA_PUMP4_CONT_ALARM_BELOW = 117
+
+        SA_PUMP4_MAX_FLOW = 97
+
+        SA_PUMP4_MAX_SPEED = 0
+
+        SA_PUMP4_CONTROL_ADJUST_EACH_DOSE_ML = 629
+
+        SA_PUMP4_CONTROL_LIMIT_RAISE = 630
+
+        SA_PUMP4_CONTROL_LIMIT_LOWER = 631
+
+
+/////////////////////////////
+
 	// The softwareversion.
 
 	SOFTWAREVERSION = 0

@@ -9,12 +9,13 @@ import (
 
 func dosingPumps(profiluxController *profilux.Controller, repo service.Controller) error {
 
-	count, err := profiluxController.GetTimerCount()
-	if err != nil {
-		return err
-	}
+//	count, err := profiluxController.GetTimerCount()
+//	count,err := 16,
+//	if err != nil {
+//		return err
+//	}
 
-	for i := 0; i < count; i++ {
+	for i := 0; i < 16; i++ {
 		pump, err := repo.GetDosingPump(models.GetID(models.DosingPumpType, i))
 
 		if err != nil && err != service.ErrNotFound {

@@ -10,6 +10,15 @@ type DosingPump struct {
 	Channel  int
 	Rate     int
 	PerDay   int
+// added
+	MaxFlow			float64
+	DailyDose		float64
+	Name			string
+	RemainingML		float64
+	RemainingDays		float64
+	ContainerCapacity	int
+	ContainerMinimum	int
+//
 	Settings types.TimerSettings
 }
 

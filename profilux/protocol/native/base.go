@@ -15,8 +15,8 @@ const (
 
 func calculateChecksum(data []byte) byte {
 	dataSum := 0
-	for b := range data {
-		dataSum += b
+	for _,b := range data {
+		dataSum += int(b)
 	}
 
 	bca := byte(dataSum % 256)
@@ -229,7 +229,7 @@ func getMessageData(reply []byte) int {
 		}
 
 		if (reply[i] & 0xF0) == dataOffset {
-			value := reply[i] & 0x0F
+			value := int(reply[i] & 0x0F)
 			value <<= offset
 			data += int(value)
 			offset += 4

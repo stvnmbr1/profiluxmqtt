@@ -37,7 +37,8 @@ type Device struct {
 	Name         string `json:"name"`
 	Model        string `json:"model"`
 	Manufacturer string `json:"manufacturer"`
-	Version      string `json:"hw_version"`
+	Version      string `json:"sw_version"`
+	SerialNumber string `json:"hw_version"`
 }
 
 type HaBaseConfig struct {
@@ -46,6 +47,7 @@ type HaBaseConfig struct {
 	UniqueId            string `json:"unique_id"`
 	AvailabilityTopic   string `json:"availability_topic,omitempty"`
 	DeviceClass         string `json:"device_class,omitempty"`
+	StateClass	    string `json:"state_class,omitempty"`
 	PayloadAvailable    string `json:"payload_available"`
 	PayloadNotAvailable string `json:"payload_not_available"`
 	Icon                string `json:"icon,omitempty"`
@@ -162,15 +164,274 @@ const suffix = ""
 
 func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controller, mqttClient mqtt.Client, log logger.ILog, forceUpdate bool) {
 	info, _ := controllerRepo.GetInfo()
-	controllerName := fmt.Sprintf("%s_%d%s", sanitize(string(info.Model)), info.DeviceAddress, suffix)
-	deviceName := string(info.Model) + suffix
-	device := Device{
+
+///
+///
+///
+
+        khdControllerName := fmt.Sprintf("KH_Director_%v", info.KHDSerialNumber)
+        deviceName := "KH_Director_" + string(info.KHDSerialNumber)
+        device := Device{
+                Identifiers:  khdControllerName,
+                Version:      fmt.Sprintf("%v", info.KHDSoftwareVersion),
+		SerialNumber: fmt.Sprintf("%v", info.KHDSerialNumber),
+                Name:         "KH Director",
+                Model:        "KH Director",
+                Manufacturer: "GHL",
+        }
+
+	KHMeasurementConfig := HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                "KH Measurement",
+                                UniqueId:            fmt.Sprintf("%s_kh_measurement", khdControllerName),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+//				StateClass:	     "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/KHMeasurement", khdControllerName),
+                        UnitOfMeasurement: "°DKh",
+                }
+                msg, _ := json.Marshal(KHMeasurementConfig)
+                profiMqtt.publishHA(mqttClient, log, "sensor", khdControllerName, "KHMeasurement", msg, forceUpdate)
+
+
+///
+///
+///
+///
+///
+///
+///
+///
+//////////////////
+	controllerName := fmt.Sprintf("%s_%d%s", sanitize(string(info.Model)), info.SerialNumber, suffix)
+	deviceName = string(info.Model) + suffix
+	device = Device{
 		Identifiers:  controllerName,
 		Version:      fmt.Sprintf("%.2f", info.SoftwareVersion),
+		SerialNumber: fmt.Sprintf("%v",info.SerialNumber),
 		Name:         deviceName,
 		Model:        string(info.Model),
 		Manufacturer: "GHL",
 	}
+/////////////////////
+
+
+        TemperatureConfig := HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                "Temperature",
+                                UniqueId:            fmt.Sprintf("%s_temperature", controllerName),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+				DeviceClass:         "",
+//                                StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/Temperature", controllerName),
+                        UnitOfMeasurement: "°C",
+                }
+                msg, _ = json.Marshal(TemperatureConfig)
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, "Temperature", msg, forceUpdate)
+
+
+////////////
+//////////// Dosers
+
+//names
+        DoserNameConfig := HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                "Pump 1 Name",
+                                UniqueId:            fmt.Sprintf("%s_pump_1_name", controllerName),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+//                                StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_1_name", controllerName),
+                        UnitOfMeasurement: "mL",
+                }
+                msg, _ = json.Marshal(DoserNameConfig)
+		pump:= fmt.Sprintf("info.SA_PUMP_1_NAME")
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, "pump_1_name", msg, forceUpdate)
+
+
+	for i:=2; i<5; i++ {
+
+        	DoserNameConfig = HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                fmt.Sprintf("Pump %v Name", int(i)),
+                                UniqueId:            fmt.Sprintf("%s_pump_%v_name", controllerName, int(i)),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+//                                StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_%v_name", controllerName, int(i)),
+                        UnitOfMeasurement: "",
+                }
+                msg, _ = json.Marshal(DoserNameConfig)
+                pump= fmt.Sprintf("pump_%v_name",i)
+		profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, pump, msg, forceUpdate)
+
+
+	}
+
+/// remaining ML
+
+        DoserRemMLConfig := HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                "Pump 1 Remaining mL",
+                                UniqueId:            fmt.Sprintf("%s_pump_1_remaining_ml", controllerName),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+  //                              StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_1_remaining_ml", controllerName),
+                        UnitOfMeasurement: "mL",
+                }
+                msg, _ = json.Marshal(DoserRemMLConfig)
+                pump= fmt.Sprintf("info.SA_PUMP1_REMAINING_ML")
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, "pump_1_remaining_ml", msg, forceUpdate)
+
+
+        for i:=2; i<5; i++ {
+
+                DoserRemMLConfig = HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                fmt.Sprintf("Pump %v Remaining mL", i),
+                                UniqueId:            fmt.Sprintf("%s_pump_%v_remaining_ml", controllerName, i),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+  //                              StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_%v_remaining_ml", controllerName, i),
+                        UnitOfMeasurement: "mL",
+                }
+                msg, _ = json.Marshal(DoserRemMLConfig)
+                pump= fmt.Sprintf("pump_%v_remaining_ml",i)
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, pump, msg, forceUpdate)
+
+
+        }
+
+        DoserRemDaysConfig := HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                "Pump 1 Remaining Days",
+                                UniqueId:            fmt.Sprintf("%s_pump_1_remaining_days", controllerName),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+  //                              StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_1_remaining_days", controllerName),
+                        UnitOfMeasurement: "",
+                }
+                msg, _ = json.Marshal(DoserRemDaysConfig)
+                pump= fmt.Sprintf("info.SA_PUMP1_REMAINING_DAYS")
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, "pump_1_remaining_days", msg, forceUpdate)
+
+
+        for i:=2; i<5; i++ {
+
+                DoserRemDaysConfig = HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                fmt.Sprintf("Pump %v Remaining Days", i),
+                                UniqueId:            fmt.Sprintf("%s_pump_%v_remaining_days", controllerName, i),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+  //                              StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_%v_remaining_days", controllerName, i),
+                        UnitOfMeasurement: "",
+                }
+                msg, _ = json.Marshal(DoserRemDaysConfig)
+                pump= fmt.Sprintf("pump_%v_remaining_days",i)
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, pump, msg, forceUpdate)
+
+
+        }
+
+        DoserDailyDoseConfig := HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                "Pump 1 Daily Dose",
+                                UniqueId:            fmt.Sprintf("%s_pump_1_daily_dose", controllerName),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+  //                              StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_1_daily_dose", controllerName),
+                        UnitOfMeasurement: "mL",
+                }
+                msg, _ = json.Marshal(DoserDailyDoseConfig)
+                pump= fmt.Sprintf("info.SA_PUMP1_DAILY_DOSE")
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, "pump_1_daily_dose", msg, forceUpdate)
+
+
+        for i:=2; i<5; i++ {
+
+                DoserDailyDoseConfig = HaStateConfig{
+                        HaBaseConfig: HaBaseConfig{
+                                Device:              device,
+                                Name:                fmt.Sprintf("Pump %v Daily Dose", i),
+                                UniqueId:            fmt.Sprintf("%s_pump_%v_daily_dose", controllerName, i),
+                                AvailabilityTopic:   "profiluxmqtt/status",
+                                PayloadAvailable:    "online",
+                                PayloadNotAvailable: "offline",
+                                DeviceClass:         "",
+  //                              StateClass:          "measurement",
+                                Icon:               "mdi:wrench",
+                        },
+                        StateTopic:        fmt.Sprintf("profiluxmqtt/%s/pump_%v_daily_dose", controllerName, i),
+                        UnitOfMeasurement: "mL",
+                }
+                msg, _ = json.Marshal(DoserDailyDoseConfig)
+                pump= fmt.Sprintf("pump_%v_daily_dose",i)
+                profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, pump, msg, forceUpdate)
+
+
+        }
+
+
+
+
+// for loop settings.Dosercount
+
+////
+////
+////
+//// OLD CONFIG
+
 
 	config := HaStateConfig{
 		HaBaseConfig: HaBaseConfig{
@@ -185,39 +446,8 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 		StateTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/alarm", controllerName),
 	}
 
-	msg, _ := json.Marshal(config)
+	msg, _ = json.Marshal(config)
 	profiMqtt.publishHA(mqttClient, log, "binary_sensor", controllerName, "Alarm", msg, forceUpdate)
-
-	modeConfig := HaStateConfig{
-		HaBaseConfig: HaBaseConfig{
-			Device:              device,
-			Name:                fmt.Sprintf("%s Mode", deviceName),
-			UniqueId:            strings.ToLower(fmt.Sprintf("%s_mode", controllerName)),
-			AvailabilityTopic:   "profiluxmqtt/status",
-			PayloadAvailable:    "online",
-			PayloadNotAvailable: "offline",
-		},
-		StateTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/mode", controllerName),
-	}
-
-	modeMsg, _ := json.Marshal(modeConfig)
-	profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, "Mode", modeMsg, forceUpdate)
-
-	modeSocketsConfig := HaSwitchConfig{
-		HaBaseConfig: HaBaseConfig{
-			Device:              device,
-			Name:                fmt.Sprintf("%s Manual Sockets", deviceName),
-			UniqueId:            strings.ToLower(fmt.Sprintf("%s_manualsockets", controllerName)),
-			AvailabilityTopic:   "profiluxmqtt/status",
-			PayloadAvailable:    "online",
-			PayloadNotAvailable: "offline",
-		},
-		StateTopic:   fmt.Sprintf("profiluxmqtt/%s/Controller/ManualSockets/state", controllerName),
-		CommandTopic: fmt.Sprintf("profiluxmqtt/%s/Controller/ManualSockets/command", controllerName),
-	}
-
-	modeSocketMsg, _ := json.Marshal(modeSocketsConfig)
-	profiMqtt.publishHA(mqttClient, log, "switch", controllerName, "ManualSockets", modeSocketMsg, forceUpdate)
 
 	feedButtonConfig := HaButtonConfig{
 		HaBaseConfig: HaBaseConfig{
@@ -481,4 +711,5 @@ func (profiMqtt *ProfiluxMqtt) UpdateHomeAssistant(controllerRepo repo.Controlle
 		msgLevel, _ := json.Marshal(stateConfig)
 		profiMqtt.publishHA(mqttClient, log, "sensor", controllerName, name, msgLevel, forceUpdate)
 	}
+
 }

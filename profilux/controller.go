@@ -4,6 +4,9 @@ import (
 	"strconv"
 	"time"
 
+	"fmt"
+//	"reflect"
+
 	"github.com/pkg/errors"
 
 	"github.com/cjburchell/tools-go/math"
@@ -233,33 +236,36 @@ func (controller *Controller) GetSerialNumber() (int, error) {
 }
 
 func (controller *Controller) GetSoftwareDate() (time.Time, error) {
+fmt.Println("status")
+fmt.Println(controller.getDataText(10020))
+
 	return controller.getDataDate(code.SOFTWAREDATE)
 }
 
-func (controller *Controller) GetDeviceAddress() (int, error) {
-	return controller.getData(code.ADDRESS)
-}
+//func (controller *Controller) GetDeviceAddress() (int, error) {
+//	return controller.getData(code.ADDRESS)
+//}
+//
+//func (controller *Controller) GetLatitude() (float64, error) {
+//	return controller.getDataFloat(code.LOC_LATITUDE, 0.1)
+//}
+//
+//func (controller *Controller) GetLongitude() (float64, error) {
+//	return controller.getDataFloat(code.LOC_LONGITUDE, 0.1)
+//}
+//
+//func (controller *Controller) GetMoonPhase() (float64, error) {
+//	return controller.getDataFloat(code.MOON_ACTPHASE, 1)
+//}
+//
+//func (controller *Controller) GetAlarm() (types.CurrentState, error) {
+//	return controller.getDataCurrentState(code.ISALARM)
+//}
 
-func (controller *Controller) GetLatitude() (float64, error) {
-	return controller.getDataFloat(code.LOC_LATITUDE, 0.1)
-}
-
-func (controller *Controller) GetLongitude() (float64, error) {
-	return controller.getDataFloat(code.LOC_LONGITUDE, 0.1)
-}
-
-func (controller *Controller) GetMoonPhase() (float64, error) {
-	return controller.getDataFloat(code.MOON_ACTPHASE, 1)
-}
-
-func (controller *Controller) GetAlarm() (types.CurrentState, error) {
-	return controller.getDataCurrentState(code.ISALARM)
-}
-
-func (controller *Controller) GetOperationMode() (types.OperationMode, error) {
-	result, err := controller.getDataEnum(code.OPMODE, types.GetOperationMode)
-	return types.OperationMode(result), err
-}
+//func (controller *Controller) GetOperationMode() (types.OperationMode, error) {
+//	result, err := controller.getDataEnum(code.OPMODE, types.GetOperationMode)
+//	return types.OperationMode(result), err
+//}
 
 // endregion
 
@@ -538,6 +544,7 @@ func (controller *Controller) GetDigitalInputState(index int) (types.CurrentStat
 // endregion
 
 // region Timer
+// is actually dosing pump
 
 func (controller *Controller) GetTimerCount() (int, error) {
 
@@ -563,9 +570,75 @@ func (controller *Controller) GetTimerSettings(index int) (types.TimerSettings, 
 	}, err
 }
 
+// KH Director calls
+//
+//
+//
+//
+//
+
+
+func (controller *Controller) GetKHDSerialNumber(index int) (int, error) {
+        return controller.getData(code.KHD_SERIALNUMBER)
+}
+
+func (controller *Controller) GetKHDSoftwareVersion(index int) (float64, error) {
+        return controller.getDataFloat(code.KHD_SOFTWAREVERSION,1)
+}
+
+func (controller *Controller) GetKHDKHMeasurement(index int) (float64, error) {
+        return controller.getDataFloatAndRound(code.KHD_KH_MEASUREMENT, 0.1, 1)
+}
+
+//func (controller *Controller) GetKHDLastMeasurement(index int) (time.Time, error) {
+//        return controller.getDataDate(code.KHD_LAST_MEASUREMENT)
+//}
+
+/// SA Temperature
+
+func (controller *Controller) GetTemperature(index int) (float64, error) {
+        return controller.getDataFloatAndRound(code.SA_TEMPERATURE, 0.01, 2)
+}
+
+
+
+//SA dosingpump calls
+//
+//
+//
+
+
 func (controller *Controller) GetDosingRate(index int) (int, error) {
 	return controller.getData(code.TIMER1_RATEPERDOSING + getOffset(index, 12, 21))
 }
+
+////////////
+////////////
+/////////////
+
+func (controller *Controller) GetPumpDailyDose(index int) (int, error) {
+        return controller.getData(index)
+}
+
+func (controller *Controller) GetPumpRemainingML(index int) (int, error) {
+        return controller.getData(index)
+}
+
+func (controller *Controller) GetPumpName(index int) (string, error) {
+        return controller.getDataText(index)
+}
+
+func (controller *Controller) GetPumpRemainingDays(index int) (float64, error) {
+        return controller.getDataFloatAndRound(index, 0.1, 1)
+}
+
+func (controller *Controller) GetPumpContCapacity(index int) (int, error) {
+        return controller.getData(index)
+}
+
+/////////////
+/////////////
+/////////////
 
 // endregion
 

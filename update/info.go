@@ -4,12 +4,25 @@ import (
 	"github.com/cjburchell/profiluxmqtt/profilux/types"
 	"time"
 
+        "github.com/cjburchell/profiluxmqtt/profilux/code"
+
+
 	service "github.com/cjburchell/profiluxmqtt/data/repo"
 	"github.com/cjburchell/profiluxmqtt/models"
 	"github.com/cjburchell/profiluxmqtt/profilux"
+	logger "github.com/cjburchell/uatu-go"
 )
 
 func info(controller *profilux.Controller, repo service.Controller) error {
+
+        log := logger.Create(logger.Settings{
+                MinLogLevel:  logger.DEBUG,
+                ServiceName:  "Profilux MQTT",
+                LogToConsole: true,
+                UseHTTP:      false,
+                UsePubSub:    false,
+        })
+
 
 	info, err := repo.GetInfo()
 	if err != nil && err != service.ErrNotFound {
@@ -18,10 +31,12 @@ func info(controller *profilux.Controller, repo service.Controller) error {
 
 	info.LastUpdate = time.Now()
 
+        log.Debug("get software version")
 	info.SoftwareVersion, err = controller.GetSoftwareVersion()
 	if err != nil {
 		return err
 	}
+        log.Debug("get model")
 
 	info.Model, err = controller.GetModel()
 	if err != nil {
@@ -38,58 +53,188 @@ func info(controller *profilux.Controller, repo service.Controller) error {
 		return err
 	}
 
-	info.DeviceAddress, err = controller.GetDeviceAddress()
-	if err != nil {
-		return err
-	}
+//KH Director
 
-	info.Latitude, err = controller.GetLatitude()
-	if err != nil {
-		return err
-	}
+        info.KHDSoftwareVersion, err = controller.GetKHDSoftwareVersion(0)
+        if err != nil {
+                return err
+        }
 
-	info.Longitude, err = controller.GetLongitude()
-	if err != nil {
-		return err
-	}
+	info.KHDSerialNumber, err = controller.GetKHDSerialNumber(0)
+        if err != nil {
+                return err
+        }
 
-	info.MoonPhase, err = controller.GetMoonPhase()
-	if err != nil {
-		return err
-	}
-	info.Alarm, err = controller.GetAlarm()
-	if err != nil {
-		return err
-	}
 
-	info.OperationMode, err = controller.GetOperationMode()
-	if err != nil {
-		return err
-	}
+	info.KHDKHMeasurement, err = controller.GetKHDKHMeasurement(0)
+        if err != nil {
+                return err
+        }
 
-	if info.OperationMode == types.OperationModeManualSockets {
-		controller.SetOperationMode(types.OperationModeManualSockets)
-	}
+//TEMPERATURE
 
-	for i := 0; i < 4; i++ {
-		err = updateMaintenanceMode(controller, &info, i)
-		if err != nil {
-			return err
-		}
-	}
+	info.Temperature, err = controller.GetTemperature(0)
+        if err != nil {
+                return err
+        }
 
-	reminderCount, err := controller.GetReminderCount()
-	if err != nil {
-		return err
-	}
+// Dosing pumps
 
-	for i := 0; i < reminderCount; i++ {
-		err = updateReminder(controller, &info, i)
-		if err != nil {
-			return err
-		}
-	}
+	info.SA_PUMP1_NAME, err = controller.GetPumpName(code.SA_PUMP1_NAME)
+       	if err != nil {
+               	return err
+       	}
 
+        info.SA_PUMP1_REMAINING_ML, err = controller.GetPumpRemainingML(code.SA_PUMP1_REMAINING_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP1_REMAINING_DAYS, err = controller.GetPumpRemainingDays(code.SA_PUMP1_REMAINING_DAYS)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP1_DAILY_DOSE, err = controller.GetPumpDailyDose(code.SA_PUMP1_DAILY_DOSE_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP1_CONT_CAPACITY, err = controller.GetPumpContCapacity(code.SA_PUMP1_CONT_CAPACITY)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP2_NAME, err = controller.GetPumpName(code.SA_PUMP2_NAME)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP2_REMAINING_ML, err = controller.GetPumpRemainingML(code.SA_PUMP2_REMAINING_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP2_REMAINING_DAYS, err = controller.GetPumpRemainingDays(code.SA_PUMP2_REMAINING_DAYS)
+        if err != nil {
+                return err
+        }
+
+	info.SA_PUMP2_DAILY_DOSE, err = controller.GetPumpDailyDose(code.SA_PUMP2_DAILY_DOSE_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP2_CONT_CAPACITY, err = controller.GetPumpContCapacity(code.SA_PUMP2_CONT_CAPACITY)
+        if err != nil {
+                return err
+        }
+
+	info.SA_PUMP3_NAME, err = controller.GetPumpName(code.SA_PUMP3_NAME)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP3_REMAINING_ML, err = controller.GetPumpRemainingML(code.SA_PUMP3_REMAINING_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP3_REMAINING_DAYS, err = controller.GetPumpRemainingDays(code.SA_PUMP3_REMAINING_DAYS)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP3_DAILY_DOSE, err = controller.GetPumpDailyDose(code.SA_PUMP3_DAILY_DOSE_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP3_CONT_CAPACITY, err = controller.GetPumpContCapacity(code.SA_PUMP3_CONT_CAPACITY)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP4_NAME, err = controller.GetPumpName(code.SA_PUMP4_NAME)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP4_REMAINING_ML, err = controller.GetPumpRemainingML(code.SA_PUMP4_REMAINING_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP4_REMAINING_DAYS, err = controller.GetPumpRemainingDays(code.SA_PUMP4_REMAINING_DAYS)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP4_DAILY_DOSE, err = controller.GetPumpDailyDose(code.SA_PUMP4_DAILY_DOSE_ML)
+        if err != nil {
+                return err
+        }
+
+        info.SA_PUMP4_CONT_CAPACITY, err = controller.GetPumpContCapacity(code.SA_PUMP4_CONT_CAPACITY)
+        if err != nil {
+                return err
+        }
+
+
+
+//	info.DeviceAddress, err = controller.GetDeviceAddress()
+//	if err != nil {
+//		return err
+//	}
+//
+//	info.Latitude, err = controller.GetLatitude()
+//	if err != nil {
+//		return err
+//	}
+//
+//	info.Longitude, err = controller.GetLongitude()
+//	if err != nil {
+//		return err
+//	}
+
+//	info.MoonPhase, err = controller.GetMoonPhase()
+//	if err != nil {
+//		return err
+//	}
+//	info.Alarm, err = controller.GetAlarm()
+//	if err != nil {
+//		return err
+//	}
+//
+//	info.OperationMode, err = controller.GetOperationMode()
+//	if err != nil {
+//		return err
+//	}
+//
+//	if info.OperationMode == types.OperationModeManualSockets {
+//		controller.SetOperationMode(types.OperationModeManualSockets)
+//	}
+//
+//	for i := 0; i < 4; i++ {
+//		err = updateMaintenanceMode(controller, &info, i)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	reminderCount, err := controller.GetReminderCount()
+//	if err != nil {
+//		return err
+//	}
+//
+//	for i := 0; i < reminderCount; i++ {
+//		err = updateReminder(controller, &info, i)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+	log.Debug("info returned")
 	return repo.SetInfo(info)
 }
 
@@ -182,43 +327,55 @@ func InfoState(controller *profilux.Controller, repo service.Controller) error {
 	}
 
 	info.LastUpdate = time.Now()
-	info.Alarm, err = controller.GetAlarm()
-	if err != nil {
-		return err
-	}
-	info.OperationMode, err = controller.GetOperationMode()
-	if err != nil {
-		return err
-	}
 
-	if info.OperationMode == types.OperationModeManualSockets {
-		controller.SetOperationMode(types.OperationModeManualSockets)
-	}
+	info.KHDKHMeasurement, err = controller.GetKHDKHMeasurement(0)
+        if err != nil {
+                return err
+        }
 
-	info.MoonPhase, err = controller.GetMoonPhase()
-	if err != nil {
-		return err
-	}
+        info.Temperature, err = controller.GetTemperature(0)
+        if err != nil {
+                return err
+        }
 
-	for index := range info.Maintenance {
-		info.Maintenance[index].IsActive, err = controller.IsMaintenanceActive(info.Maintenance[index].Index)
-		if err != nil {
-			return err
-		}
 
-		info.Maintenance[index].TimeLeft, err = controller.GetMaintenanceTimeLeft(info.Maintenance[index].Index)
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, item := range info.Reminders {
-		err = reminderUpdate(&item, controller)
-		if err != nil {
-			return err
-		}
-	}
-
+//	info.Alarm, err = controller.GetAlarm()
+//	if err != nil {
+//		return err
+//	}
+//	info.OperationMode, err = controller.GetOperationMode()
+//	if err != nil {
+//		return err
+//	}
+//
+//	if info.OperationMode == types.OperationModeManualSockets {
+//		controller.SetOperationMode(types.OperationModeManualSockets)
+//	}
+//
+//	info.MoonPhase, err = controller.GetMoonPhase()
+//	if err != nil {
+//		return err
+//	}
+//
+//	for index := range info.Maintenance {
+//		info.Maintenance[index].IsActive, err = controller.IsMaintenanceActive(info.Maintenance[index].Index)
+//		if err != nil {
+//			return err
+//		}
+//
+//		info.Maintenance[index].TimeLeft, err = controller.GetMaintenanceTimeLeft(info.Maintenance[index].Index)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
+//	for _, item := range info.Reminders {
+//		err = reminderUpdate(&item, controller)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//
 	return repo.SetInfo(info)
 }
 
